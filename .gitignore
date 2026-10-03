@@ -1,0 +1,10 @@
+.DS_Store
+.idea/
+xcuserdata/
+*.xcuserstate
+DerivedData/
+build/
+*.ipa
+*.dSYM.zip
+*.dSYM
+.claude/settings.local.json
