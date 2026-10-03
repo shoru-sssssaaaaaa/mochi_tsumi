@@ -21,7 +21,8 @@ MochittoTsumitsumi/
   Assets.xcassets                 AppIcon, LaunchBackground color
   Info.plist                      Launch screen only; other keys are INFOPLIST_KEY_* build settings in pbxproj
   PrivacyInfo.xcprivacy           No tracking/collection; declares UserDefaults (CA92.1)
-AppStore/                         Store listing text, screenshots, GitHub Pages site (support/privacy)
+AppStore/                         Store listing text, screenshots
+docs/                             GitHub Pages site (support/privacy), served from main /docs
 リリース手順.md                   Release guide (Japanese, for a non-developer audience)
 ```
 
