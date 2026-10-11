@@ -11,7 +11,7 @@ struct GameView: UIViewRepresentable {
         let bridge = context.coordinator
 
         let contents = WKUserContentController()
-        bridge.installSaveScript(into: contents)
+        bridge.installBootScript(into: contents)
         contents.add(bridge, name: "save")    // JS → アプリ：進みぐあいを保存
         contents.add(bridge, name: "haptic")  // JS → アプリ：ぶるっとふるえる
         contents.add(bridge, name: "score")   // JS → アプリ：Game Center にスコアを送る
@@ -77,15 +77,20 @@ final class GameBridge: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
         notice.prepare()
     }
 
-    /// 保存しておいた進みぐあいを、ページのスクリプトより先に window.__MOCHI_SAVE__ に入れる
-    func installSaveScript(into contents: WKUserContentController) {
+    /// ページのスクリプトより先に、保存しておいた進みぐあい（window.__MOCHI_SAVE__）と
+    /// iOS がこのアプリに選んだ言語（window.__MOCHI_LANG__、"ja" か "en"）を入れる
+    func installBootScript(into contents: WKUserContentController) {
         let saved = UserDefaults.standard.string(forKey: Self.saveKey) ?? "{}"
-        let literal = (try? JSONSerialization.data(withJSONObject: saved, options: .fragmentsAllowed))
-            .flatMap { String(data: $0, encoding: .utf8) } ?? "\"{}\""
+        let lang = Bundle.main.preferredLocalizations.first ?? "en"
         contents.removeAllUserScripts()
-        contents.addUserScript(WKUserScript(source: "window.__MOCHI_SAVE__ = \(literal);",
+        contents.addUserScript(WKUserScript(source: "window.__MOCHI_SAVE__ = \(Self.jsString(saved)); window.__MOCHI_LANG__ = \(Self.jsString(lang));",
                                             injectionTime: .atDocumentStart,
                                             forMainFrameOnly: true))
+    }
+
+    private static func jsString(_ value: String) -> String {
+        (try? JSONSerialization.data(withJSONObject: value, options: .fragmentsAllowed))
+            .flatMap { String(data: $0, encoding: .utf8) } ?? "\"\""
     }
 
     func userContentController(_ userContentController: WKUserContentController,
@@ -123,7 +128,7 @@ final class GameBridge: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
 
     // メモリ不足などでページが落ちたら、最新のセーブで読み直す
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
-        installSaveScript(into: webView.configuration.userContentController)
+        installBootScript(into: webView.configuration.userContentController)
         loadGame()
     }
 }

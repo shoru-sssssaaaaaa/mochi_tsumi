@@ -19,6 +19,7 @@ MochittoTsumitsumi/
   GameView.swift                  WKWebView wrapper + GameBridge (JS <-> native)
   GameCenter.swift                GameKit sign-in, score submission, leaderboard UI
   MochittoTsumitsumi.entitlements Game Center entitlement (CODE_SIGN_ENTITLEMENTS)
+  InfoPlist.xcstrings             Localized CFBundleDisplayName (en "Mochi Stack" / ja "もちっとつみつみ")
   web/index.html                  The entire game (HTML/CSS/JS, ~700 lines, no external assets)
   Assets.xcassets                 AppIcon, LaunchBackground color
   Info.plist                      Launch screen only; other keys are INFOPLIST_KEY_* build settings in pbxproj
@@ -55,7 +56,8 @@ awk '/<script>/{f=1;next}/<\/script>/{f=0}f' MochittoTsumitsumi/web/index.html >
 
 | Direction | Mechanism | Payload |
 |---|---|---|
-| Native → JS | `WKUserScript` at document start sets `window.__MOCHI_SAVE__` | The saved JSON **as a string** (JS calls `JSON.parse` on it) |
+| Native → JS | `WKUserScript` at document start (`installBootScript`) sets `window.__MOCHI_SAVE__` | The saved JSON **as a string** (JS calls `JSON.parse` on it) |
+| Native → JS | Same script sets `window.__MOCHI_LANG__` | `Bundle.main.preferredLocalizations.first` (`"ja"` / `"en"`) |
 | JS → Native | `webkit.messageHandlers.save.postMessage(json)` | JSON string, rejected if ≥ 10,000 bytes; stored in `UserDefaults` key `mochitto-save` |
 | JS → Native | `webkit.messageHandlers.haptic.postMessage(kind)` | `"light"` / `"soft"` / `"success"` / `"warning"` |
 | JS → Native | `webkit.messageHandlers.score.postMessage({board,value})` | `board` is `"stage"` / `"free"`; mapped to leaderboard IDs in `GameCenter.leaderboards` (unknown names are ignored) |
@@ -64,7 +66,7 @@ awk '/<script>/{f=1;next}/<\/script>/{f=0}f' MochittoTsumitsumi/web/index.html >
 
 - In a browser `NATIVE` is null, so `SAVE` falls back to `localStorage['mochitto-save']` and `buzz()` is a no-op. Keep this fallback working — the game must stay playable as a plain HTML file.
 - Save keys currently used: `unlocked` (highest cleared stage index + 1), `muted`, `seenHelp`, `records` (`{stages:{[idx]:bestScore}, free:bestScore, plays}`).
-- On `webViewWebContentProcessDidTerminate` the save script is re-installed with the latest UserDefaults value and the page reloads.
+- On `webViewWebContentProcessDidTerminate` the boot script is re-installed with the latest UserDefaults value and the page reloads.
 - Game Center: `GC` is true only after `mochiGC(true)`. `sendScores()` (called from `saveScore()` and on sign-in) submits both values every time — Game Center keeps the best, so resubmitting is harmless and backfills scores from before the feature existed. `unlocked` must be saved before `finish()` so the stage-count board sees the new value. The 🌏 button in `#records` is hidden unless `GC`. Open leaderboards with `GKAccessPoint.shared.trigger(state:)`, not `GKGameCenterViewController` (deprecated in iOS 26; when its remote GameOverlayUI fails — e.g. always in the Simulator — it leaves an empty transparent VC that swallows all taps).
 - Adding a new message handler requires both `contents.add(bridge, name:)` in `makeUIView` and a case in `userContentController(_:didReceive:)`.
 
@@ -81,6 +83,7 @@ awk '/<script>/{f=1;next}/<\/script>/{f=0}f' MochittoTsumitsumi/web/index.html >
 - **End of a run**: `finish(clear,delay)` computes the score and saves it into `game.end`; `tickEnd()` then runs `eatAll()` automatically and calls `showResult()` once every blob is eaten. Score = height ×100 (+ leftovers ×50 and speed bonus `300 - sec*5` in stage mode) − touches ×20 (`game.touches`, counted on each `pointerdown` on a mochi during play). In free mode the 食べる button ends the run.
 - **Screens**: `#home` is a full-screen opaque layer (logo, CSS-drawn mochi whose colors come from `TYPES`, button panel), toggled with `showHome(on)`, which also sets `inert` on the canvas/toolbar/HUD behind it. `.card` overlays `#help` / `#result` / `#records` / `#stages` (stage select: cleared stages + the next one; its home chip is hidden until stage 1 is cleared) are switched with `showCard(id)` (only one shown) and stack above home. The app boots into `goHome()`. The toolbar's ホーム button discards the current run. Sound toggling goes through `toggleSnd()` so the toolbar and home buttons stay in sync.
 - **Modes**: `game.mode` is `'menu'` | `'stage'` | `'free'`. The toolbar (`buildBar()`) is regenerated from state on every change.
+- **Language**: `LANG` = `?lang=` query → `window.__MOCHI_LANG__` → `navigator.language`. `JA` is true for `ja*`; everything else is English. Strings in JS use `tr(ja,en)`; static HTML carries `data-en` (innerHTML) / `data-en-label` (aria-label), swapped once at boot. Try it in a browser with `index.html?lang=en`. English-only CSS hooks use `html[lang=en]`.
 - **Audio**: all sounds synthesized with WebAudio (`tone`, `noise`, `SND`). `AudioContext` is created lazily on first user gesture via `audio()`.
 - **Safe area / floor**: CSS `env(safe-area-inset-*)` is read into JS through the hidden `.probe` element. `FLOOR` is the measured top of `#bar` (`getBoundingClientRect`), re-measured by a `ResizeObserver` because WKWebView fills in safe-area insets after the first layout without firing `resize`.
 - **HUD**: `.hud` is a flex column (title/meter row → goal → tip); don't make its children `position:fixed` again or the goal dots and tip will overlap.
@@ -92,5 +95,6 @@ awk '/<script>/{f=1;next}/<\/script>/{f=0}f' MochittoTsumitsumi/web/index.html >
 - `web/` is a **folder reference** in the project, so any file dropped in it is bundled automatically. New Swift files, however, must be added to `project.pbxproj` (the project does not use synchronized groups).
 - Docs (`*.md`) belong at the repo root or in `AppStore/`, not inside `MochittoTsumitsumi/`, so they don't end up in Copy Bundle Resources.
 - Build number (`CURRENT_PROJECT_VERSION`) must be incremented for every App Store Connect upload.
-- UI text is Japanese and intentionally hiragana-heavy for young players; keep that tone when adding strings.
+- UI text is bilingual: every new string needs both languages via `tr()` / `data-en`. Japanese is intentionally hiragana-heavy for young players; English is short and plain. Check the toolbar width at 375px in both languages (English labels are longer).
+- `developmentRegion` is `en`, so devices in any language other than Japanese get the English display name and `__MOCHI_LANG__ = "en"`.
 - Existing code comments are in Japanese. The JS is written in a dense, minified-like style (short names, many statements per line); match it when editing `index.html`.

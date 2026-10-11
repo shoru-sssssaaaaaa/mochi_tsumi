@@ -123,25 +123,26 @@ canvas{position:fixed;inset:0;touch-action:none;display:block}
 .sgrid .next small{color:#5a2a1c}
 #recWorld{margin-bottom:12px}
 .rec .free{border-top:1.5px dashed #e6d8bf;margin-top:4px;padding-top:4px}
-@media (max-width:520px){.bar{gap:2px;padding-left:4px;padding-right:4px}.bar button{min-width:42px;padding:4px 2px}.sw{width:28px;height:24px}.title h1{font-size:22px}}
+@media (max-width:520px){.bar{gap:2px;padding-left:4px;padding-right:4px}.bar button{min-width:0;padding:4px 3px}.sw{width:28px;height:24px}.title h1{font-size:22px}}
+html[lang=en] .logo h1 span:last-child{font-size:clamp(34px,11vw,56px);letter-spacing:0}
 .probe{position:fixed;visibility:hidden;pointer-events:none;padding-top:var(--sat);padding-bottom:var(--sab)}
 </style>
 </head>
 <body>
-<canvas id="cv" aria-label="おもちの遊び場。なにもない所をタップするとおもちが生まれ、おもちはつついたり引っぱったりできます。"></canvas>
+<canvas id="cv" aria-label="おもちの遊び場。なにもない所をタップするとおもちが生まれ、おもちはつついたり引っぱったりできます。" data-en-label="Mochi play area. Tap an empty spot to drop a mochi. You can poke and pull the mochi."></canvas>
 <header class="hud" id="hud">
-  <div class="top"><div class="title"><h1>もちっとつみつみ</h1></div><div class="meter" id="meter" aria-live="polite"></div></div>
+  <div class="top"><div class="title"><h1 data-en="Mochi Stack">もちっとつみつみ</h1></div><div class="meter" id="meter" aria-live="polite"></div></div>
   <div class="goal" id="goal"></div>
   <div class="tip" id="tip" aria-live="polite"></div>
 </header>
 <div class="probe" id="probe"></div>
-<nav class="bar" id="bar" aria-label="どうぐ"></nav>
+<nav class="bar" id="bar" aria-label="どうぐ" data-en-label="Tools"></nav>
 
 <section class="home show" id="home" aria-labelledby="homeTitle">
   <button class="snd" id="homeSnd"></button>
   <div class="logo">
-    <h1 id="homeTitle"><span>もちっと</span><span>つみつみ</span></h1>
-    <p>のびて、くっつく。おもち積みパズル</p>
+    <h1 id="homeTitle"><span data-en="Squishy">もちっと</span><span data-en="Mochi Stack">つみつみ</span></h1>
+    <p data-en="Stretchy, sticky mochi stacking puzzle">のびて、くっつく。おもち積みパズル</p>
   </div>
   <div class="scene" id="scene" aria-hidden="true">
     <i class="m" data-t="yomogi"></i>
@@ -151,23 +152,23 @@ canvas{position:fixed;inset:0;touch-action:none;display:block}
   <div class="panel">
     <p class="prog" id="homeProg"></p>
     <button class="go" id="homeStage"></button>
-    <p class="note">金色の線まで 積みあげよう。ステージごとに おもちの数が きまっている</p>
-    <button class="go alt" id="homeFree">じゆうに遊ぶ</button>
-    <p class="note">すきなだけ 出して、のばして、積む。「食べる」で おしまい</p>
-    <div class="links"><button class="chip" id="homeSel">🗂 えらぶ</button><button class="chip" id="homeHelp">📖 あそびかた</button><button class="chip" id="homeRec">🏆 きろく</button></div>
+    <p class="note" data-en="Stack up to the gold line. Each stage gives you a set number of mochi.">金色の線まで 積みあげよう。ステージごとに おもちの数が きまっている</p>
+    <button class="go alt" id="homeFree" data-en="Free Play">じゆうに遊ぶ</button>
+    <p class="note" data-en="Drop, stretch and stack as much as you like. Tap “Eat” to finish.">すきなだけ 出して、のばして、積む。「食べる」で おしまい</p>
+    <div class="links"><button class="chip" id="homeSel" data-en="🗂 Stages">🗂 えらぶ</button><button class="chip" id="homeHelp" data-en="📖 Help">📖 あそびかた</button><button class="chip" id="homeRec" data-en="🏆 Records">🏆 きろく</button></div>
   </div>
 </section>
 
 <div class="cardbg" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
   <div class="card">
-    <h2 id="helpTitle">おもちを つみあげろ！</h2>
-    <div class="rule">おもちを積んで、<b>金色の線</b>より高くしよう。<br>線をこえたまま <b>2秒</b> たえたらクリア！</div>
+    <h2 id="helpTitle" data-en="Stack the mochi!">おもちを つみあげろ！</h2>
+    <div class="rule" data-en="Stack mochi higher than the <b>gold line</b>.<br>Stay above it for <b>2 seconds</b> to clear!">おもちを積んで、<b>金色の線</b>より高くしよう。<br>線をこえたまま <b>2秒</b> たえたらクリア！</div>
     <ul>
-      <li><span>👆</span><span>なにもない所をタップすると、そこにおもちが落ちてくる</span></li>
-      <li><span>✊</span><span>おもちは引っぱって動かせる。よくのびる</span></li>
-      <li><span>🍡</span><span>おもちは種類で性質がちがう。<b>おもい・つるつる・くっつく・とろとろ</b>。えらぶと下に説明が出る</span></li>
-      <li><span>🔢</span><span>使えるおもちの種類と数は、ステージごとに決まっている</span></li>
-      <li><span>🥢</span><span>さいごは ぜんぶ食べて スコアに。手で さわるほど 味が落ちて <b>マイナス</b></span></li>
+      <li><span>👆</span><span data-en="Tap an empty spot and a mochi drops there">なにもない所をタップすると、そこにおもちが落ちてくる</span></li>
+      <li><span>✊</span><span data-en="Pull a mochi to move it. It stretches a lot!">おもちは引っぱって動かせる。よくのびる</span></li>
+      <li><span>🍡</span><span data-en="Each kind of mochi is different: <b>heavy, slippery, sticky, gooey</b>. Pick one to see what it does">おもちは種類で性質がちがう。<b>おもい・つるつる・くっつく・とろとろ</b>。えらぶと下に説明が出る</span></li>
+      <li><span>🔢</span><span data-en="Each stage decides which mochi you get, and how many">使えるおもちの種類と数は、ステージごとに決まっている</span></li>
+      <li><span>🥢</span><span data-en="At the end, you eat them all for points. The more you touch them, the worse they taste: <b>minus</b> points">さいごは ぜんぶ食べて スコアに。手で さわるほど 味が落ちて <b>マイナス</b></span></li>
     </ul>
     <button class="go" id="helpGo"></button>
   </div>
@@ -184,45 +185,50 @@ canvas{position:fixed;inset:0;touch-action:none;display:block}
 
 <div class="cardbg" id="records" role="dialog" aria-modal="true" aria-labelledby="recTitle">
   <div class="card">
-    <h2 id="recTitle">きろく</h2>
+    <h2 id="recTitle" data-en="Records">きろく</h2>
     <div class="rec" id="recList"></div>
     <p id="recSum"></p>
-    <button class="go alt" id="recWorld" hidden>🌏 せかいの ランキング</button>
-    <button class="go" id="recBack">もどる</button>
+    <button class="go alt" id="recWorld" hidden data-en="🌏 World Ranking">🌏 せかいの ランキング</button>
+    <button class="go" id="recBack" data-en="Back">もどる</button>
   </div>
 </div>
 
 <div class="cardbg" id="stages" role="dialog" aria-modal="true" aria-labelledby="selTitle">
   <div class="card">
-    <h2 id="selTitle">ステージを えらぶ</h2>
+    <h2 id="selTitle" data-en="Choose a Stage">ステージを えらぶ</h2>
     <div class="sgrid" id="selList"></div>
-    <button class="go" id="selBack">もどる</button>
+    <button class="go" id="selBack" data-en="Back">もどる</button>
   </div>
 </div>
 
 <script>
+/* ============ ことば：日本語でなければ英語（アプリは __MOCHI_LANG__ で教えてくれる。ブラウザでは ?lang=en で試せる） ============ */
+const LANG=new URLSearchParams(location.search).get('lang')||window.__MOCHI_LANG__||navigator.language||'ja',JA=/^ja/i.test(LANG),tr=(ja,en)=>JA?ja:en;
+if(!JA){document.documentElement.lang='en';document.title='Mochi Stack';
+  document.querySelectorAll('[data-en]').forEach(el=>el.innerHTML=el.dataset.en);
+  document.querySelectorAll('[data-en-label]').forEach(el=>el.setAttribute('aria-label',el.dataset.enLabel))}
 /* ============ 設定 ============ */
 /* m:重さ  rs:大きさの倍率  stiff:ふちの張り  bend:形のくずれにくさ  pres:ふくらむ力  plast:のびた形を覚える速さ
    fric:ほかのもちとの摩擦(小さいほど つるつる)  stick:ほかのもちに くっつく  keep:お盆の上での すべり  glue:お盆へのくっつき */
 const TYPES={
-  shiro :{name:'しろ',  fill:'#fbf7ef',line:'#d9ccb6',eye:'#3a2a22',cheek:'#f2a3a0',keep:.55,glue:3.2,
+  shiro :{name:tr('しろ','Shiro'),  fill:'#fbf7ef',line:'#d9ccb6',eye:'#3a2a22',cheek:'#f2a3a0',keep:.55,glue:3.2,
           m:1,  rs:1,   stiff:.55,bend:.06, pres:.9, plast:.006,stick:0.45,fric:0.7,
-          desc:'ふつうのおもち。ほどよく やわらかく、少し くっつく。'},
-  anko  :{name:'あんこ',fill:'#5e252b',line:'#3d1519',eye:'#fbe9d7',cheek:'#c85c6a',keep:.5,glue:2.6,
+          desc:tr('ふつうのおもち。ほどよく やわらかく、少し くっつく。','Plain mochi. Nicely soft and a little sticky.')},
+  anko  :{name:tr('あんこ','Anko'),fill:'#5e252b',line:'#3d1519',eye:'#fbe9d7',cheek:'#c85c6a',keep:.5,glue:2.6,
           m:2.6,rs:.86, stiff:.8, bend:.16, pres:1,  plast:.002,stick:0.35,fric:0.7,
-          desc:'小さくて おもくて かたい。ぶつかっても ずれないので、いちばん下に置くと 塔が安定する。'},
-  kinako:{name:'きなこ',fill:'#e8c47c',line:'#c49544',eye:'#3a2a22',cheek:'#e8866c',keep:.85,glue:.9,dots:'#b98636',
+          desc:tr('小さくて おもくて かたい。ぶつかっても ずれないので、いちばん下に置くと 塔が安定する。','Red bean mochi. Small, heavy and firm. It stays put when bumped, so put it at the bottom for a steady tower.')},
+  kinako:{name:tr('きなこ','Kinako'),fill:'#e8c47c',line:'#c49544',eye:'#3a2a22',cheek:'#e8866c',keep:.85,glue:.9,dots:'#b98636',
           m:.8, rs:1,   stiff:.65,bend:.11, pres:.95,plast:.004,stick:0,fric:0.03,
-          desc:'まるくて 高さが出る。でも粉で つるつる、どのおもちとも くっつかない。下に置くと 上がすべり落ちる。'},
-  yomogi:{name:'よもぎ',fill:'#9dba68',line:'#6c8c40',eye:'#2d3a1e',cheek:'#e59a8e',keep:.55,glue:3.2,
+          desc:tr('まるくて 高さが出る。でも粉で つるつる、どのおもちとも くっつかない。下に置くと 上がすべり落ちる。','Round and tall. But its powder makes it slippery, so nothing sticks to it. Mochi on top will slide off.')},
+  yomogi:{name:tr('よもぎ','Yomogi'),fill:'#9dba68',line:'#6c8c40',eye:'#2d3a1e',cheek:'#e59a8e',keep:.55,glue:3.2,
           m:1.1,rs:1,   stiff:.55,bend:.05, pres:.85,plast:.006,fric:0.9,stick:1,
-          desc:'いちばん強く ぺたっと くっつく。のせた所で止まる。引っぱると のびて、ぺりっと はがれる。'},
-  sakura:{name:'さくら',fill:'#f8c8d2',line:'#e497aa',eye:'#4a2630',cheek:'#ee7f98',keep:.55,glue:2.8,leaf:true,
+          desc:tr('いちばん強く ぺたっと くっつく。のせた所で止まる。引っぱると のびて、ぺりっと はがれる。','The stickiest one. It stops right where it lands. Pull it to stretch it and peel it off.')},
+  sakura:{name:tr('さくら','Sakura'),fill:'#f8c8d2',line:'#e497aa',eye:'#4a2630',cheek:'#ee7f98',keep:.55,glue:2.8,leaf:true,
           m:.6, rs:1.1, stiff:.42,bend:.02, pres:.72,plast:.014,area:0.8,stick:0.6,fric:0.8,
-          desc:'かるくて とろとろ。平たく広がって デコボコを うめ、つぎのおもちを のせやすくする。'},
-  mikan :{name:'みかん',fill:'#f59a28',line:'#d27710',eye:'#4a2a10',cheek:'#e45a36',keep:.6,top:true,
+          desc:tr('かるくて とろとろ。平たく広がって デコボコを うめ、つぎのおもちを のせやすくする。','Light and gooey. It spreads flat and fills the bumps, so the next mochi sits nicely.')},
+  mikan :{name:tr('みかん','Mikan'),fill:'#f59a28',line:'#d27710',eye:'#4a2a10',cheek:'#e45a36',keep:.6,top:true,
           m:.5, rs:1,   stiff:1,  bend:.5,  pres:.9, plast:0,   stick:0.25,fric:0.4,
-          desc:'ごほうびの みかん。'},
+          desc:tr('ごほうびの みかん。','A little orange, as a reward.')},
 };
 const PICK=['shiro','kinako','anko','yomogi','sakura'];
 const N=18, SUB=3, ITER=4, GRAV=2100, SCALE=.85, UNIT=80*SCALE; // SCALE: mochi size. UNIT (height of 1 mochi) follows it so stage goals keep their balance
@@ -246,7 +252,7 @@ function stageOf(i){
   for(let j=0;j<n;j++){r=(r*16807)%2147483647;const t=PICK[r%PICK.length];inv[t]=(inv[t]||0)+1}
   return [+Math.min(2.5+.2*k,(FLOOR-150-SAT)/UNIT).toFixed(2),inv];
 }
-const invText=inv=>Object.entries(inv).map(([t,n])=>`${TYPES[t].name}×${n}`).join('　');
+const invText=inv=>Object.entries(inv).map(([t,n])=>`${TYPES[t].name}×${n}`).join(tr('　',', '));
 const LIMIT=28; // お盆にのせられる数
 const game={mode:'menu',stage:0,goal:1,inv:{},inv0:{},pieces:3,left:3,state:'menu',keepT:0,stillT:0,height:0,bestH:0,t0:0,touches:0,end:null};
 
@@ -422,10 +428,10 @@ function analyze(b){
   b.speed=sp;b.vx=vx;b.vy=vy;
   const isDrag=drag&&drag.b===b;
   if(sp<.35&&!isDrag&&b.poke<=0)b.idle+=1/60;else b.idle=0;
-  if(isDrag&&b.stretch>1.35&&!b.myoned){b.myoned=true;SND.myon();pop(pointer.x,pointer.y-20,'みょ〜ん','#fbf7ef',22)}
+  if(isDrag&&b.stretch>1.35&&!b.myoned){b.myoned=true;SND.myon();pop(pointer.x,pointer.y-20,tr('みょ〜ん','Stretch~'),'#fbf7ef',22)}
   if(!isDrag)b.myoned=false;
   const st=P.reduce((n,p)=>n+(p.st?1:0),0);
-  if(isDrag&&b.stuckPrev>0&&st===0&&b.stretch>1.3){SND.peri();buzz('soft');pop(b.cx,FLOOR-14,'ぺりっ','#f6dca0',18)}
+  if(isDrag&&b.stuckPrev>0&&st===0&&b.stretch>1.3){SND.peri();buzz('soft');pop(b.cx,FLOOR-14,tr('ぺりっ','Peel!'),'#f6dca0',18)}
   b.stuckPrev=st;
   b.poke=Math.max(0,b.poke-1/60);
   b.blink-=1/60;if(b.blink<-.12)b.blink=2+Math.random()*4;
@@ -539,8 +545,8 @@ function drawStage(){
     ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();
     if(k>0){ctx.strokeStyle='#fff3c4';ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W*k,y);ctx.stroke()}
     ctx.font='14px "Mochiy Pop One","Hiragino Maru Gothic ProN",sans-serif';ctx.textBaseline='bottom';
-    ctx.fillStyle='#f6dca0';ctx.textAlign='left';ctx.fillText('ここまで積む！',10,y-6);
-    if(k>0){ctx.textAlign='right';ctx.fillStyle='#fff3c4';ctx.fillText('たえて… '+Math.max(0,2-game.keepT).toFixed(1),W-10,y-6)}
+    ctx.fillStyle='#f6dca0';ctx.textAlign='left';ctx.fillText(tr('ここまで積む！','Stack up to here!'),10,y-6);
+    if(k>0){ctx.textAlign='right';ctx.fillStyle='#fff3c4';ctx.fillText(tr('たえて… ','Hold on… ')+Math.max(0,2-game.keepT).toFixed(1),W-10,y-6)}
     return;
   }
   // さいこう記録の線
@@ -548,7 +554,7 @@ function drawStage(){
     const y=FLOOR-best*UNIT;ctx.strokeStyle='rgba(246,220,160,.55)';ctx.lineWidth=2;ctx.setLineDash([8,8]);
     ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();ctx.setLineDash([]);
     ctx.fillStyle='rgba(246,220,160,.85)';ctx.font='12px "Mochiy Pop One","Hiragino Maru Gothic ProN",sans-serif';ctx.textAlign='left';ctx.textBaseline='bottom';
-    ctx.fillText('さいこう '+best.toFixed(1)+'もち',10,y-4);
+    ctx.fillText(tr(`さいこう ${best.toFixed(1)}もち`,`Best ${best.toFixed(1)} mochi`),10,y-4);
   }
 }
 function render(){
@@ -565,13 +571,13 @@ function pettan(x,y){
   let type=sel;
   if(game.state!=='play')return;
   if(game.mode==='stage'){
-    if(game.left<=0){pop(x,y,'もうないよ','#f6dca0',18);return}
-    if(!(game.inv[type]>0)){pop(x,y,TYPES[type].name+'は もうないよ','#f6dca0',18);return}
+    if(game.left<=0){pop(x,y,tr('もうないよ','All gone!'),'#f6dca0',18);return}
+    if(!(game.inv[type]>0)){pop(x,y,tr(TYPES[type].name+'は もうないよ',`No more ${TYPES[type].name}!`),'#f6dca0',18);return}
     game.inv[type]--;game.left--;
     // 使いきったら、のこっている種類に自動で持ちかえる
     if(game.inv[type]===0){const nx=Object.keys(game.inv).find(t=>game.inv[t]>0);if(nx){sel=nx;showTip(sel)}}
     updateGoal();buildBar();
-  }else if(blobs.filter(b=>!b.eat).length>=LIMIT){pop(x,y,'おぼんが いっぱい！','#f6dca0',20);return}
+  }else if(blobs.filter(b=>!b.eat).length>=LIMIT){pop(x,y,tr('おぼんが いっぱい！','The tray is full!'),'#f6dca0',20);return}
   mallets.push({x,y:Math.min(y,FLOOR-10),t:0,done:false,type});
 }
 function tickMallets(){
@@ -581,7 +587,7 @@ function tickMallets(){
       m.done=true;SND.pettan();buzz('light');shake=7;
       const R=37+Math.random()*9,y=Math.min(m.y,FLOOR-R*.7);
       const nb=makeBlob(m.x,y,R,m.type,.62);
-      pop(m.x,y-R-24,'ぺったん！','#fbf7ef',24);
+      pop(m.x,y-R-24,tr('ぺったん！','Thump!'),'#fbf7ef',24);
       // まわりのもちを少しゆらす
       for(const b of blobs)if(b!==nb)for(const p of b.pts){const d=Math.hypot(p.x-m.x,p.y-m.y);if(d<160&&d>1){p.ox-=(p.x-m.x)/d*2.5;p.oy-=(p.y-m.y)/d*2.5}}
     }
@@ -589,16 +595,16 @@ function tickMallets(){
   mallets=mallets.filter(m=>m.t<.5);
 }
 function poke(b,x,y){
-  b.poke=.9;SND.puni();pop(x,y-18,'ぷに','#fbf7ef',18);
+  b.poke=.9;SND.puni();pop(x,y-18,tr('ぷに','Squish'),'#fbf7ef',18);
   for(const p of b.pts){const d=Math.hypot(p.x-x,p.y-y);if(d<b.R*1.1){const k=(1-d/(b.R*1.1))*9;p.x+=(b.cx-p.x)/(d+b.R)*k*2;p.y+=(b.cy-p.y)/(d+b.R)*k*2}}
   for(const p of b.pts)p.oy+=2.2; // ぴょんと跳ねる
 }
 function addMikan(){
-  if(game.mode==='free'&&blobs.filter(b=>!b.eat).length>=LIMIT){pop(W/2,60,'おぼんが いっぱい！','#f6dca0',20);return}
+  if(game.mode==='free'&&blobs.filter(b=>!b.eat).length>=LIMIT){pop(W/2,60,tr('おぼんが いっぱい！','The tray is full!'),'#f6dca0',20);return}
   // いちばん高いもちの上から落とす
   let top=null;for(const b of blobs)if(!b.eat&&b.type!=='mikan'&&(!top||b.bb[1]<top.bb[1]))top=b;
   const x=top?top.cx:W/2;makeBlob(x,Math.max(30,(top?top.bb[1]:FLOOR)-140),24,'mikan');
-  pop(x,50,'みかん','#f6dca0',18);
+  pop(x,50,TYPES.mikan.name,'#f6dca0',18);
 }
 function eatAll(){
   let k=0;for(const b of blobs)if(!b.eat){b.eat=time+k*.12;k++}
@@ -607,20 +613,20 @@ function eatAll(){
 function tickEat(){
   for(const b of blobs){
     if(!b.eat||time<b.eat)continue;
-    if(!b.eatStarted){b.eatStarted=true;SND.paku();pop(b.cx,b.cy-b.R,'ぱくっ','#f6dca0',20)}
+    if(!b.eatStarted){b.eatStarted=true;SND.paku();pop(b.cx,b.cy-b.R,tr('ぱくっ','Munch'),'#f6dca0',20)}
     b.A0*=.9;b.L0*=.95;b.L2*=.95;for(let i=0;i<N;i++)b.rest[i]*=.95;
   }
   const before=blobs.length;blobs=blobs.filter(b=>b.A0>40);
   if(drag&&!blobs.includes(drag.b))drag=null;
-  if(before>0&&blobs.length===0)pop(W/2,H*.42,'ごちそうさま','#fbf7ef',30,1);
+  if(before>0&&blobs.length===0)pop(W/2,H*.42,tr('ごちそうさま','Yum!'),'#fbf7ef',30,1);
 }
 function tickTower(){
   // 静かに積み上がっている山の高さ
   let top=FLOOR;for(const b of blobs){if(b.eat||(drag&&drag.b===b)||b.speed>.6)continue;if(b.bb[1]<top)top=b.bb[1]}
   const h=(FLOOR-top)/UNIT;
   if(Math.abs(h-cand)<.05)candT+=1/60;else{cand=h;candT=0}
-  if(candT>1&&cand>best+.05){const was=best;best=cand;if(game.mode==='free'&&was>0.3&&best>=1.5){SND.record();pop(W/2,FLOOR-best*UNIT-30,'しんきろく！','#f6dca0',24)}}
-  if(game.mode==='free')document.getElementById('meter').innerHTML=`いまの山 <b>${Math.max(0,cand).toFixed(1)}</b> もち<br>さいこう ${best.toFixed(1)} もち`;
+  if(candT>1&&cand>best+.05){const was=best;best=cand;if(game.mode==='free'&&was>0.3&&best>=1.5){SND.record();pop(W/2,FLOOR-best*UNIT-30,tr('しんきろく！','New record!'),'#f6dca0',24)}}
+  if(game.mode==='free')document.getElementById('meter').innerHTML=tr(`いまの山 <b>${Math.max(0,cand).toFixed(1)}</b> もち<br>さいこう ${best.toFixed(1)} もち`,`Now <b>${Math.max(0,cand).toFixed(1)}</b> mochi<br>Best ${best.toFixed(1)} mochi`);
 }
 
 /* ============ ステージ ============ */
@@ -632,12 +638,13 @@ function startStage(i){
   showCard(null);showHome(false);
   sel=Object.keys(inv0)[0];
   updateGoal();buildBar();showTip(sel);
-  pop(W/2,FLOOR-goal*UNIT-40,'ステージ'+(i+1),'#fbf7ef',30,1);
+  pop(W/2,FLOOR-goal*UNIT-40,stageName(i),'#fbf7ef',30,1);
 }
+const stageName=i=>tr('ステージ','Stage ')+(i+1);
 function startFree(){
   clearWorld();Object.assign(game,{mode:'free',state:'play',touches:0});
   showCard(null);showHome(false);
-  $('goal').innerHTML='じゆうに遊ぶ：タップで出す・引っぱる・積む';
+  $('goal').innerHTML=tr('じゆうに遊ぶ：タップで出す・引っぱる・積む','Free Play: tap to drop, pull and stack');
   buildBar();showTip(sel);
   [[.3,'shiro'],[.5,'kinako'],[.7,'sakura']].forEach(([x,t],i)=>makeBlob(W*x,FLOOR-200-i*60,40+i*3,t));
   for(const b of blobs)bbox(b);
@@ -646,7 +653,8 @@ function updateGoal(){
   if(game.mode!=='stage')return;
   let dots='';
   for(const [t,n0] of Object.entries(game.inv0)){const n=game.inv[t];for(let k=0;k<n0;k++)dots+=`<i class="${k<n0-n?'used':''}" style="background:${TYPES[t].fill}"></i>`}
-  $('goal').innerHTML=`ステージ${game.stage+1}：金色の線まで積もう<div class="dots" aria-label="のこり ${invText(game.inv)}"><span aria-hidden="true">のこり</span>${dots}</div>`;
+  $('goal').innerHTML=stageName(game.stage)+tr('：金色の線まで積もう',': stack up to the gold line')
+    +`<div class="dots" aria-label="${tr('のこり ','Left: ')+invText(game.inv)}"><span aria-hidden="true">${tr('のこり','Left')}</span>${dots}</div>`;
 }
 function stableTop(){
   // 動いていない（つかんでいない）おもちのてっぺん
@@ -656,7 +664,7 @@ function stableTop(){
 function tickGame(){
   if(game.mode!=='stage')return;
   const h=stableTop();game.height=h;
-  $('meter').innerHTML=`いまの高さ <b>${h.toFixed(1)}</b> もち<br>ゴール ${game.goal.toFixed(1)} もち`;
+  $('meter').innerHTML=tr(`いまの高さ <b>${h.toFixed(1)}</b> もち<br>ゴール ${game.goal.toFixed(1)} もち`,`Height <b>${h.toFixed(1)}</b> mochi<br>Goal ${game.goal.toFixed(1)} mochi`);
   if(game.state==='play'){
     const holding=!!(down&&down.hit);
     if(holding)game.keepT=0;
@@ -664,7 +672,7 @@ function tickGame(){
     if(game.keepT>=2){
       if(game.stage+1>SAVE.get('unlocked',0))SAVE.set('unlocked',game.stage+1);
       game.state='clear';finish(true,1.8);SND.record();buzz('success');shake=5;
-      pop(W/2,FLOOR-game.goal*UNIT-50,'クリア！','#fff3c4',40,1);
+      pop(W/2,FLOOR-game.goal*UNIT-50,tr('クリア！','Clear!'),'#fff3c4',40,1);
       addMikan(); // ごほうびの、みかん
     }
     const allStill=!holding&&!mallets.length&&blobs.every(b=>b.speed<.35);
@@ -673,12 +681,12 @@ function tickGame(){
   }
 }
 function finish(clear,delay){
-  const stage=game.mode==='stage',h=stage?game.height:best,parts=[[`高さ ${h.toFixed(1)}もち ×100`,Math.round(h*10)*10]];
+  const stage=game.mode==='stage',h=stage?game.height:best,parts=[[tr(`高さ ${h.toFixed(1)}もち ×100`,`Height ${h.toFixed(1)} mochi ×100`),Math.round(h*10)*10]];
   if(stage){
-    parts.push([`あまり ${game.left}こ ×50`,game.left*50]);
-    if(clear){const sec=time-game.t0;parts.push([`はやさ ${Math.round(sec)}びょう`,Math.max(0,Math.round(300-sec*5))])}
+    parts.push([tr(`あまり ${game.left}こ ×50`,`Left over ${game.left} ×50`),game.left*50]);
+    if(clear){const sec=time-game.t0;parts.push([tr(`はやさ ${Math.round(sec)}びょう`,`Speed ${Math.round(sec)} sec`),Math.max(0,Math.round(300-sec*5))])}
   }
-  if(game.touches)parts.push([`さわった ${game.touches}回 ×20`,-game.touches*20]);
+  if(game.touches)parts.push([tr(`さわった ${game.touches}回 ×20`,`Touched ${game.touches} times ×20`),-game.touches*20]);
   const score=Math.max(0,parts.reduce((a,p)=>a+p[1],0));
   game.end={clear,stage,parts,score,touches:game.touches,...saveScore(stage?game.stage:'free',score),at:time+delay,eating:false};
 }
@@ -701,34 +709,35 @@ function sendScores(){if(!GC)return;const r=records();
 window.mochiGC=on=>{GC=!!on;$('recWorld').hidden=!GC;sendScores()};
 function failHint(){
   const inv=game.inv0;
-  if(inv.anko)return 'コツ：<b>あんこ</b>は おもくて かたい。さいしょに置いて 土台にしよう。';
-  if(inv.kinako)return 'コツ：<b>きなこ</b>は つるつる。下に置くと 上のおもちが すべり落ちる。さいごに のせよう。';
-  if(inv.yomogi)return 'コツ：<b>よもぎ</b>は ぺたっと くっつく。ずれやすい所に 早めに使おう。';
-  return 'コツ：いちばん上のおもちの<b>真上</b>をタップすると、高く積める。';
+  if(inv.anko)return tr('コツ：<b>あんこ</b>は おもくて かたい。さいしょに置いて 土台にしよう。','Tip: <b>Anko</b> is heavy and firm. Put it down first to make a base.');
+  if(inv.kinako)return tr('コツ：<b>きなこ</b>は つるつる。下に置くと 上のおもちが すべり落ちる。さいごに のせよう。','Tip: <b>Kinako</b> is slippery. Mochi on top of it slide off. Put it on last.');
+  if(inv.yomogi)return tr('コツ：<b>よもぎ</b>は ぺたっと くっつく。ずれやすい所に 早めに使おう。','Tip: <b>Yomogi</b> is sticky. Use it early where things slide.');
+  return tr('コツ：いちばん上のおもちの<b>真上</b>をタップすると、高く積める。','Tip: Tap <b>right above</b> the top mochi to stack higher.');
 }
+const pnt=v=>v+tr('てん',' pts');
 function showResult(e){
   const used=game.pieces-game.left;let msg;
   if(!e.stage){
-    $('resTitle').textContent='ごちそうさま！';msg='';
-    $('resGo').textContent='もういちど遊ぶ';$('resGo').onclick=startFree;
+    $('resTitle').textContent=tr('ごちそうさま！','Yum! All eaten!');msg='';
+    $('resGo').textContent=tr('もういちど遊ぶ','Play Again');$('resGo').onclick=startFree;
   }else if(e.clear){
-    $('resTitle').textContent=`ステージ${game.stage+1} クリア！`;
-    msg=used<game.pieces?`おもち ${used}こ で達成。${game.pieces-used}こ あまらせた！`:`おもち ${used}こ ぜんぶ使って達成。`;
+    $('resTitle').textContent=stageName(game.stage)+tr(' クリア！',' Clear!');
+    msg=used<game.pieces?tr(`おもち ${used}こ で達成。${game.pieces-used}こ あまらせた！`,`Cleared with ${used} mochi. ${game.pieces-used} left over!`):tr(`おもち ${used}こ ぜんぶ使って達成。`,`Cleared using all ${used} mochi.`);
     const [ng,ni]=stageOf(game.stage+1);
-    msg+=`<br>つぎは ${ng.toFixed(1)}もち の高さ。<br>つかえるのは ${invText(ni)}`;
-    $('resGo').textContent=`ステージ${game.stage+2}へ`;$('resGo').onclick=()=>startStage(game.stage+1);
+    msg+=tr(`<br>つぎは ${ng.toFixed(1)}もち の高さ。<br>つかえるのは ${invText(ni)}`,`<br>Next goal: ${ng.toFixed(1)} mochi high.<br>You get: ${invText(ni)}`);
+    $('resGo').textContent=tr(`ステージ${game.stage+2}へ`,`On to Stage ${game.stage+2}`);$('resGo').onclick=()=>startStage(game.stage+1);
   }else{
     const gap=Math.max(.1,game.goal-game.height);
-    $('resTitle').textContent='とどかなかった…';
-    msg=`あと <b>${gap.toFixed(1)}もち</b> でした。<br>${failHint()}`;
-    $('resGo').textContent='もういちど';$('resGo').onclick=()=>startStage(game.stage);
+    $('resTitle').textContent=tr('とどかなかった…','Not quite…');
+    msg=tr(`あと <b>${gap.toFixed(1)}もち</b> でした。`,`Just <b>${gap.toFixed(1)} mochi</b> short.`)+`<br>${failHint()}`;
+    $('resGo').textContent=tr('もういちど','Try Again');$('resGo').onclick=()=>startStage(game.stage);
   }
-  if(e.touches>=5)msg=(msg?msg+'<br>':'')+'さわりすぎて、おもちが ちょっと かたくなった…';
+  if(e.touches>=5)msg=(msg?msg+'<br>':'')+tr('さわりすぎて、おもちが ちょっと かたくなった…','You touched them so much, the mochi got a little hard…');
   const rows=e.parts.map(([l,v])=>`<div><span>${l}</span><span>${v<0?'−'+(-v):'+'+v}</span></div>`).join('');
-  $('resText').innerHTML=`<div class="score">${e.score}<small> てん</small></div>`
-    +(e.isBest?'<div class="best">ベスト更新！</div>':`<div class="prev">ベスト ${e.prev}てん</div>`)
+  $('resText').innerHTML=`<div class="score">${e.score}<small>${tr(' てん',' pts')}</small></div>`
+    +(e.isBest?`<div class="best">${tr('ベスト更新！','New best!')}</div>`:`<div class="prev">${tr('ベスト ','Best ')+pnt(e.prev)}</div>`)
     +`<div class="parts">${rows}</div>${msg}`;
-  $('resSub').textContent='ホームにもどる';$('resSub').onclick=goHome;
+  $('resSub').textContent=tr('ホームにもどる','Back to Home');$('resSub').onclick=goHome;
   showCard('result');
 }
 const unlocked=()=>SAVE.get('unlocked',0);
@@ -743,11 +752,11 @@ function showHome(on){
 function goHome(){
   Object.assign(game,{mode:'menu',state:'menu',keepT:0,end:null});drag=null;down=null;
   $('goal').innerHTML='';$('meter').innerHTML='';$('tip').innerHTML='';
-  const u=unlocked();$('homeStage').textContent=u>0?`ステージ${u+1}から つづける`:'ステージ1から はじめる';
-  $('homeProg').textContent=u>0?`★ ステージ${u}まで クリア`:'';$('homeSel').hidden=u===0;
+  const u=unlocked();$('homeStage').textContent=u>0?tr(`ステージ${u+1}から つづける`,`Continue from Stage ${u+1}`):tr('ステージ1から はじめる','Start Stage 1');
+  $('homeProg').textContent=u>0?tr(`★ ステージ${u}まで クリア`,`★ Cleared up to Stage ${u}`):'';$('homeSel').hidden=u===0;
   updateSnd();showCard(null);showHome(true);$('homeStage').focus();
 }
-function updateSnd(){const b=$('homeSnd');b.textContent=muted?'🔕':'🔔';b.setAttribute('aria-pressed',!muted);b.setAttribute('aria-label','音')}
+function updateSnd(){const b=$('homeSnd');b.textContent=muted?'🔕':'🔔';b.setAttribute('aria-pressed',!muted);b.setAttribute('aria-label',tr('音','Sound'))}
 function toggleSnd(){muted=!muted;SAVE.set('muted',muted);buildBar();updateSnd()}
 document.querySelectorAll('.m').forEach((el,i)=>{const T=TYPES[el.dataset.t];
   el.style.cssText=`--c:${T.fill};--l:${T.line};--e:${T.eye};--k:${T.cheek};--s:${T.rs};animation-delay:${-i*.45}s`;
@@ -759,25 +768,25 @@ function openHelp(label,onGo){$('helpGo').textContent=label;$('helpGo').onclick=
 function showRecords(){
   const r=records(),u=unlocked(),n=Math.max(u+1,...Object.keys(r.stages).map(k=>+k+1));
   let rows='',total=0;
-  for(let i=0;i<n;i++){const v=r.stages[i];total+=v||0;rows+=`<div><span>ステージ${i+1}${i<u?' ★':''}</span><span>${v!=null?v+'てん':'−'}</span></div>`}
-  $('recList').innerHTML=rows+`<div class="free"><span>じゆうに遊ぶ</span><span>${r.free?r.free+'てん':'−'}</span></div>`;
-  $('recSum').innerHTML=`ステージ ごうけい <b>${total}</b> てん<br>あそんだ回数 ${r.plays}回`;
+  for(let i=0;i<n;i++){const v=r.stages[i];total+=v||0;rows+=`<div><span>${stageName(i)}${i<u?' ★':''}</span><span>${v!=null?pnt(v):'−'}</span></div>`}
+  $('recList').innerHTML=rows+`<div class="free"><span>${tr('じゆうに遊ぶ','Free Play')}</span><span>${r.free?pnt(r.free):'−'}</span></div>`;
+  $('recSum').innerHTML=tr(`ステージ ごうけい <b>${total}</b> てん<br>あそんだ回数 ${r.plays}回`,`Stage total <b>${total}</b> pts<br>Played ${r.plays} times`);
   showCard('records');
 }
 $('homeStage').onclick=()=>{audio();const u=unlocked();
-  if(u===0&&!SAVE.get('seenHelp',false)){SAVE.set('seenHelp',true);openHelp('ステージ1をはじめる',()=>startStage(0))}else startStage(u)};
+  if(u===0&&!SAVE.get('seenHelp',false)){SAVE.set('seenHelp',true);openHelp(tr('ステージ1をはじめる','Start Stage 1'),()=>startStage(0))}else startStage(u)};
 // クリアずみのステージと、つぎのステージをえらべる
 function showStages(){
   const r=records(),u=unlocked();let h='';
   for(let i=0;i<=u;i++){const v=r.stages[i];
-    h+=`<button data-i="${i}" class="${i===u?'next':''}" aria-label="ステージ${i+1}">${i+1}<small>${i===u?'つぎ':v!=null?v+'てん':'★'}</small></button>`}
+    h+=`<button data-i="${i}" class="${i===u?'next':''}" aria-label="${stageName(i)}">${i+1}<small>${i===u?tr('つぎ','Next'):v!=null?pnt(v):'★'}</small></button>`}
   const l=$('selList');l.innerHTML=h;showCard('stages');l.scrollTop=l.scrollHeight;
 }
 $('selList').onclick=e=>{const b=e.target.closest('[data-i]');if(b){audio();startStage(+b.dataset.i)}};
 $('homeSel').onclick=()=>{audio();showStages()};
 $('selBack').onclick=goHome;
 $('homeFree').onclick=()=>{audio();startFree()};
-$('homeHelp').onclick=()=>{audio();openHelp('もどる',goHome)};
+$('homeHelp').onclick=()=>{audio();openHelp(tr('もどる','Back'),goHome)};
 $('homeRec').onclick=()=>{audio();showRecords()};
 $('recBack').onclick=goHome;
 $('recWorld').onclick=()=>{try{NATIVE.leaderboard.postMessage('')}catch(e){}};
@@ -815,13 +824,13 @@ function buildBar(){
   const stage=game.mode==='stage';
   const kinds=stage?Object.keys(game.inv0):PICK;
   bar.innerHTML=kinds.map(k=>{const n=stage?game.inv[k]:null;
-     return `<button data-k="${k}" aria-pressed="${k===sel}" ${n===0?'disabled':''} aria-label="${TYPES[k].name}${stage?' のこり'+n+'こ':''}"><span class="sw" style="background:${TYPES[k].fill}"></span>${TYPES[k].name}${stage?`<span class="cnt">×${n}</span>`:''}</button>`}).join('')
+     return `<button data-k="${k}" aria-pressed="${k===sel}" ${n===0?'disabled':''} aria-label="${TYPES[k].name}${stage?tr(` のこり${n}こ`,`, ${n} left`):''}"><span class="sw" style="background:${TYPES[k].fill}"></span>${TYPES[k].name}${stage?`<span class="cnt">×${n}</span>`:''}</button>`}).join('')
    +`<span class="sep" aria-hidden="true"></span>`
-   +(stage?`<button data-a="retry"><span class="ico" aria-hidden="true">↺</span>やりなおす</button>`
-          :`<button data-a="mikan"><span class="sw" style="background:${TYPES.mikan.fill};width:26px;height:24px;border-radius:50%"></span>みかん</button>`
-           +`<button data-a="eat"><span class="ico" aria-hidden="true">🥢</span>食べる</button>`)
-   +`<button data-a="home"><span class="ico" aria-hidden="true">🏠</span>ホーム</button>`
-   +`<button data-a="snd" aria-pressed="${!muted}"><span class="ico" aria-hidden="true">${muted?'🔕':'🔔'}</span>${muted?'音なし':'音あり'}</button>`;
+   +(stage?`<button data-a="retry"><span class="ico" aria-hidden="true">↺</span>${tr('やりなおす','Retry')}</button>`
+          :`<button data-a="mikan"><span class="sw" style="background:${TYPES.mikan.fill};width:26px;height:24px;border-radius:50%"></span>${TYPES.mikan.name}</button>`
+           +`<button data-a="eat"><span class="ico" aria-hidden="true">🥢</span>${tr('食べる','Eat')}</button>`)
+   +`<button data-a="home"><span class="ico" aria-hidden="true">🏠</span>${tr('ホーム','Home')}</button>`
+   +`<button data-a="snd" aria-pressed="${!muted}"><span class="ico" aria-hidden="true">${muted?'🔕':'🔔'}</span>${muted?tr('音なし','Muted'):tr('音あり','Sound')}</button>`;
 }
 bar.addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;audio();
