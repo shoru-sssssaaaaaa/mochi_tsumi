@@ -32,6 +32,28 @@ final class GameCenter {
         GKLeaderboard.submitScore(value, context: 0, player: GKLocalPlayer.local, leaderboardIDs: [id]) { _ in }
     }
 
+    /// ゲーム内のランキング画面用に、上位とじぶんの順位を読みこむ（JS にそのまま渡せる形）
+    func loadRanking(board: String) async -> [String: Any] {
+        var result: [String: Any] = ["board": board, "ok": false]
+        guard isReady, let id = Self.leaderboards[board] else { return result }
+        do {
+            guard let leaderboard = try await GKLeaderboard.loadLeaderboards(IDs: [id]).first else { return result }
+            let (me, top, total) = try await leaderboard.loadEntries(
+                for: .global, timeScope: .allTime, range: NSRange(location: 1, length: Self.rankingSize))
+            let myID = GKLocalPlayer.local.gamePlayerID
+            func row(_ e: GKLeaderboard.Entry) -> [String: Any] {
+                ["rank": e.rank, "name": e.player.displayName, "value": e.score, "me": e.player.gamePlayerID == myID]
+            }
+            result["ok"] = true
+            result["total"] = total
+            result["top"] = top.map(row)
+            if let me { result["me"] = row(me) }
+        } catch {}
+        return result
+    }
+
+    private static let rankingSize = 20
+
     /// GKGameCenterViewController は iOS 26 で非推奨。自前で present すると、
     /// 表示に失敗したとき透明な画面が残って操作できなくなるので、表示と終了は GameKit にまかせる。
     func showLeaderboards() {
