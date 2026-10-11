@@ -14,6 +14,8 @@ struct GameView: UIViewRepresentable {
         bridge.installSaveScript(into: contents)
         contents.add(bridge, name: "save")    // JS → アプリ：進みぐあいを保存
         contents.add(bridge, name: "haptic")  // JS → アプリ：ぶるっとふるえる
+        contents.add(bridge, name: "score")   // JS → アプリ：Game Center にスコアを送る
+        contents.add(bridge, name: "leaderboard") // JS → アプリ：ランキング画面を開く
 
         let config = WKWebViewConfiguration()
         config.userContentController = contents
@@ -34,6 +36,7 @@ struct GameView: UIViewRepresentable {
 
         bridge.loadGame()
         bridge.prepareHaptics()
+        bridge.gameCenter.authenticate()
         return web
     }
 
@@ -44,6 +47,7 @@ struct GameView: UIViewRepresentable {
 final class GameBridge: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
     static let saveKey = "mochitto-save"
     weak var webView: WKWebView?
+    let gameCenter = GameCenter()
 
     private let lightTap = UIImpactFeedbackGenerator(style: .light)
     private let softTap = UIImpactFeedbackGenerator(style: .soft)
@@ -54,6 +58,16 @@ final class GameBridge: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
         guard let web = webView,
               let url = Bundle.main.url(forResource: "index", withExtension: "html", subdirectory: "web") else { return }
         web.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
+    }
+
+    override init() {
+        super.init()
+        gameCenter.onChange = { [weak self] _ in self?.notifyGameCenter() }
+    }
+
+    /// Game Center が使えるかどうかを、ページに知らせる
+    func notifyGameCenter() {
+        webView?.evaluateJavaScript("window.mochiGC&&mochiGC(\(gameCenter.isReady))")
     }
 
     /// 振動をすぐ出せるように準備しておく
@@ -90,9 +104,21 @@ final class GameBridge: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
             default: break
             }
             prepareHaptics()
+        case "score":
+            if let body = message.body as? [String: Any],
+               let board = body["board"] as? String,
+               let value = body["value"] as? Int {
+                gameCenter.submit(board: board, value: value)
+            }
+        case "leaderboard":
+            gameCenter.showLeaderboards()
         default:
             break
         }
+    }
+
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        notifyGameCenter()
     }
 
     // メモリ不足などでページが落ちたら、最新のセーブで読み直す

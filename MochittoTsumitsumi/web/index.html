@@ -121,6 +121,7 @@ canvas{position:fixed;inset:0;touch-action:none;display:block}
 .sgrid button.next{background:var(--kin);box-shadow:0 3px 0 #b98636}
 .sgrid small{display:block;margin-top:2px;font-size:11px;color:#9a6a4a}
 .sgrid .next small{color:#5a2a1c}
+#recWorld{margin-bottom:12px}
 .rec .free{border-top:1.5px dashed #e6d8bf;margin-top:4px;padding-top:4px}
 @media (max-width:520px){.bar{gap:2px;padding-left:4px;padding-right:4px}.bar button{min-width:42px;padding:4px 2px}.sw{width:28px;height:24px}.title h1{font-size:22px}}
 .probe{position:fixed;visibility:hidden;pointer-events:none;padding-top:var(--sat);padding-bottom:var(--sab)}
@@ -186,6 +187,7 @@ canvas{position:fixed;inset:0;touch-action:none;display:block}
     <h2 id="recTitle">きろく</h2>
     <div class="rec" id="recList"></div>
     <p id="recSum"></p>
+    <button class="go alt" id="recWorld" hidden>🌏 せかいの ランキング</button>
     <button class="go" id="recBack">もどる</button>
   </div>
 </div>
@@ -660,8 +662,8 @@ function tickGame(){
     if(holding)game.keepT=0;
     else if(h>=game.goal){if(game.keepT===0)tone(660,880,.12,.12,'triangle');game.keepT+=1/60}else game.keepT=Math.max(0,game.keepT-2/60);
     if(game.keepT>=2){
-      game.state='clear';finish(true,1.8);SND.record();buzz('success');shake=5;
       if(game.stage+1>SAVE.get('unlocked',0))SAVE.set('unlocked',game.stage+1);
+      game.state='clear';finish(true,1.8);SND.record();buzz('success');shake=5;
       pop(W/2,FLOOR-game.goal*UNIT-50,'クリア！','#fff3c4',40,1);
       addMikan(); // ごほうびの、みかん
     }
@@ -689,9 +691,14 @@ const records=()=>SAVE.get('records',null)||{stages:{},free:0,plays:0};
 function saveScore(key,score){
   const r=records(),prev=key==='free'?r.free:(r.stages[key]||0),isBest=score>prev;
   if(isBest){if(key==='free')r.free=score;else r.stages[key]=score}
-  r.plays++;SAVE.set('records',r);
+  r.plays++;SAVE.set('records',r);sendScores();
   return{isBest,prev};
 }
+/* Game Center：アプリがサインインを知らせてくれたときだけ使う（Game Center は いちばん良いスコアだけ残す） */
+let GC=false;
+function sendScores(){if(!GC)return;const r=records();
+  try{for(const [board,value] of[['stage',unlocked()],['free',r.free]])if(value>0)NATIVE.score.postMessage({board,value})}catch(e){}}
+window.mochiGC=on=>{GC=!!on;$('recWorld').hidden=!GC;sendScores()};
 function failHint(){
   const inv=game.inv0;
   if(inv.anko)return 'コツ：<b>あんこ</b>は おもくて かたい。さいしょに置いて 土台にしよう。';
@@ -727,7 +734,7 @@ function showResult(e){
 const unlocked=()=>SAVE.get('unlocked',0);
 function showCard(id){
   for(const c of['help','result','records','stages'])$(c).classList.toggle('show',c===id);
-  if(id)$(id).querySelector('.go').focus();
+  if(id)$(id).querySelector('.go:not([hidden])').focus();
 }
 function showHome(on){
   $('home').classList.toggle('show',on);
@@ -773,6 +780,7 @@ $('homeFree').onclick=()=>{audio();startFree()};
 $('homeHelp').onclick=()=>{audio();openHelp('もどる',goHome)};
 $('homeRec').onclick=()=>{audio();showRecords()};
 $('recBack').onclick=goHome;
+$('recWorld').onclick=()=>{try{NATIVE.leaderboard.postMessage('')}catch(e){}};
 
 /* ============ 入力 ============ */
 function hitBlob(x,y){

@@ -8,7 +8,7 @@ This file provides guidance to Claude Code when working in this repository.
 
 - Platform: iPhone only, portrait, iOS 16.0+, Swift 5, SwiftUI app lifecycle
 - Bundle ID: `com.shotasakaguchi.mochittotsumitsumi`
-- No network access, no third-party dependencies, no package manager, no build step for the web part
+- No network access of its own (Game Center is the only online feature, via GameKit), no third-party dependencies, no package manager, no build step for the web part
 
 ## Layout
 
@@ -17,6 +17,8 @@ MochittoTsumitsumi.xcodeproj/     Xcode project (objectVersion 56, classic group
 MochittoTsumitsumi/
   MochittoTsumitsumiApp.swift     App entry; sets AVAudioSession to .ambient
   GameView.swift                  WKWebView wrapper + GameBridge (JS <-> native)
+  GameCenter.swift                GameKit sign-in, score submission, leaderboard UI
+  MochittoTsumitsumi.entitlements Game Center entitlement (CODE_SIGN_ENTITLEMENTS)
   web/index.html                  The entire game (HTML/CSS/JS, ~700 lines, no external assets)
   Assets.xcassets                 AppIcon, LaunchBackground color
   Info.plist                      Launch screen only; other keys are INFOPLIST_KEY_* build settings in pbxproj
@@ -56,10 +58,14 @@ awk '/<script>/{f=1;next}/<\/script>/{f=0}f' MochittoTsumitsumi/web/index.html >
 | Native → JS | `WKUserScript` at document start sets `window.__MOCHI_SAVE__` | The saved JSON **as a string** (JS calls `JSON.parse` on it) |
 | JS → Native | `webkit.messageHandlers.save.postMessage(json)` | JSON string, rejected if ≥ 10,000 bytes; stored in `UserDefaults` key `mochitto-save` |
 | JS → Native | `webkit.messageHandlers.haptic.postMessage(kind)` | `"light"` / `"soft"` / `"success"` / `"warning"` |
+| JS → Native | `webkit.messageHandlers.score.postMessage({board,value})` | `board` is `"stage"` / `"free"`; mapped to leaderboard IDs in `GameCenter.leaderboards` (unknown names are ignored) |
+| JS → Native | `webkit.messageHandlers.leaderboard.postMessage('')` | Opens the Game Center leaderboard screen |
+| Native → JS | `evaluateJavaScript("mochiGC(bool)")` | Game Center sign-in state; sent on auth change and on every page load (`didFinish`) |
 
 - In a browser `NATIVE` is null, so `SAVE` falls back to `localStorage['mochitto-save']` and `buzz()` is a no-op. Keep this fallback working — the game must stay playable as a plain HTML file.
 - Save keys currently used: `unlocked` (highest cleared stage index + 1), `muted`, `seenHelp`, `records` (`{stages:{[idx]:bestScore}, free:bestScore, plays}`).
 - On `webViewWebContentProcessDidTerminate` the save script is re-installed with the latest UserDefaults value and the page reloads.
+- Game Center: `GC` is true only after `mochiGC(true)`. `sendScores()` (called from `saveScore()` and on sign-in) submits both values every time — Game Center keeps the best, so resubmitting is harmless and backfills scores from before the feature existed. `unlocked` must be saved before `finish()` so the stage-count board sees the new value. The 🌏 button in `#records` is hidden unless `GC`. Open leaderboards with `GKAccessPoint.shared.trigger(state:)`, not `GKGameCenterViewController` (deprecated in iOS 26; when its remote GameOverlayUI fails — e.g. always in the Simulator — it leaves an empty transparent VC that swallows all taps).
 - Adding a new message handler requires both `contents.add(bridge, name:)` in `makeUIView` and a case in `userContentController(_:didReceive:)`.
 
 ### Game (`web/index.html`)
