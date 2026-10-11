@@ -12,6 +12,7 @@
 		A1B2C3D4000000000000000F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D40000000000000009 /* Assets.xcassets */; };
 		A1B2C3D40000000000000010 /* web in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4000000000000000A /* web */; };
 		A1B2C3D40000000000000011 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4000000000000000C /* PrivacyInfo.xcprivacy */; };
+		A1B2C3D4000000000000001B /* GameCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4000000000000001C /* GameCenter.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -22,6 +23,8 @@
 		A1B2C3D4000000000000000A /* web */ = {isa = PBXFileReference; lastKnownFileType = folder; path = web; sourceTree = "<group>"; };
 		A1B2C3D4000000000000000B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A1B2C3D4000000000000000C /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		A1B2C3D4000000000000001C /* GameCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameCenter.swift; sourceTree = "<group>"; };
+		A1B2C3D4000000000000001D /* MochittoTsumitsumi.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MochittoTsumitsumi.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -48,10 +51,12 @@
 			children = (
 				A1B2C3D40000000000000007 /* MochittoTsumitsumiApp.swift */,
 				A1B2C3D40000000000000008 /* GameView.swift */,
+				A1B2C3D4000000000000001C /* GameCenter.swift */,
 				A1B2C3D4000000000000000A /* web */,
 				A1B2C3D40000000000000009 /* Assets.xcassets */,
 				A1B2C3D4000000000000000B /* Info.plist */,
 				A1B2C3D4000000000000000C /* PrivacyInfo.xcprivacy */,
+				A1B2C3D4000000000000001D /* MochittoTsumitsumi.entitlements */,
 			);
 			path = MochittoTsumitsumi;
 			sourceTree = "<group>";
@@ -138,6 +143,7 @@
 			files = (
 				A1B2C3D4000000000000000D /* MochittoTsumitsumiApp.swift in Sources */,
 				A1B2C3D4000000000000000E /* GameView.swift in Sources */,
+				A1B2C3D4000000000000001B /* GameCenter.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -255,8 +261,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = MochittoTsumitsumi/MochittoTsumitsumi.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 8C54G33VQ5;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MochittoTsumitsumi/Info.plist;
@@ -272,7 +279,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.shotasakaguchi.mochittotsumitsumi;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTS_MACCATALYST = NO;
@@ -286,8 +293,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = MochittoTsumitsumi/MochittoTsumitsumi.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 8C54G33VQ5;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MochittoTsumitsumi/Info.plist;
@@ -303,7 +311,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.shotasakaguchi.mochittotsumitsumi;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTS_MACCATALYST = NO;

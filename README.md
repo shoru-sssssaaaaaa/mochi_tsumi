@@ -19,7 +19,8 @@ An offline iOS puzzle game where you stack soft, stretchy, sticky mochi above a 
   - **よもぎ (yomogi)** — the stickiest; stretches before peeling off
   - **さくら (sakura)** — light and runny; spreads flat to fill gaps
 - Stage mode with hand-made and procedurally generated stages, plus a free-play sandbox
-- No ads, no in-app purchases, no network access; progress is saved only on the device
+- Game Center leaderboards (stages cleared, free-play best)
+- No ads, no in-app purchases; plays fully offline and progress is saved on the device
 
 ## How it works
 
@@ -27,6 +28,7 @@ The whole game (physics, rendering, UI, synthesized audio, stages) lives in a si
 
 - Native save storage via `UserDefaults`
 - Haptic feedback
+- Game Center sign-in, score submission, and the leaderboard screen
 - An `.ambient` audio session so the game doesn't interrupt other audio
 
 ```
@@ -34,6 +36,7 @@ MochittoTsumitsumi.xcodeproj/   Xcode project
 MochittoTsumitsumi/
   MochittoTsumitsumiApp.swift   App entry point
   GameView.swift                WKWebView wrapper and JS <-> native bridge
+  GameCenter.swift              Game Center sign-in, scores, and leaderboards
   web/index.html                The entire game
 AppStore/                       Store listing text and screenshots
 docs/                           GitHub Pages site (support / privacy policy)
