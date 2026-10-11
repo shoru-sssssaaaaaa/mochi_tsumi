@@ -263,7 +263,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = MochittoTsumitsumi/MochittoTsumitsumi.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = 8C54G33VQ5;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MochittoTsumitsumi/Info.plist;
@@ -295,7 +295,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = MochittoTsumitsumi/MochittoTsumitsumi.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = 8C54G33VQ5;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MochittoTsumitsumi/Info.plist;
