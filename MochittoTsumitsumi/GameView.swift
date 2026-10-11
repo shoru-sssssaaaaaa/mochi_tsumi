@@ -15,7 +15,8 @@ struct GameView: UIViewRepresentable {
         contents.add(bridge, name: "save")    // JS → アプリ：進みぐあいを保存
         contents.add(bridge, name: "haptic")  // JS → アプリ：ぶるっとふるえる
         contents.add(bridge, name: "score")   // JS → アプリ：Game Center にスコアを送る
-        contents.add(bridge, name: "leaderboard") // JS → アプリ：ランキング画面を開く
+        contents.add(bridge, name: "ranking") // JS → アプリ：ランキングを読みこんで mochiRank() で返す
+        contents.add(bridge, name: "leaderboard") // JS → アプリ：Game Center のランキング画面を開く
 
         let config = WKWebViewConfiguration()
         config.userContentController = contents
@@ -109,6 +110,14 @@ final class GameBridge: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
                let board = body["board"] as? String,
                let value = body["value"] as? Int {
                 gameCenter.submit(board: board, value: value)
+            }
+        case "ranking":
+            guard let board = message.body as? String else { break }
+            Task {
+                let result = await gameCenter.loadRanking(board: board)
+                guard let data = try? JSONSerialization.data(withJSONObject: result),
+                      let json = String(data: data, encoding: .utf8) else { return }
+                _ = try? await webView?.evaluateJavaScript("window.mochiRank&&mochiRank(\(json))")
             }
         case "leaderboard":
             gameCenter.showLeaderboards()

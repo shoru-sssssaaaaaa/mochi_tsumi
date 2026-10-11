@@ -123,6 +123,17 @@ canvas{position:fixed;inset:0;touch-action:none;display:block}
 .sgrid .next small{color:#5a2a1c}
 #recWorld{margin-bottom:12px}
 .rec .free{border-top:1.5px dashed #e6d8bf;margin-top:4px;padding-top:4px}
+/* せかいの ランキング */
+.tabs{display:flex;gap:6px;margin:0 0 10px}
+.tabs button{font:inherit;flex:1;border:2px solid #e6d8bf;background:none;color:#9a6a4a;border-radius:12px;padding:7px 4px;font-size:14px;cursor:pointer}
+.tabs button[aria-selected=true]{background:var(--kin);border-color:var(--kin);color:#5a2a1c}
+.rank{min-height:120px}
+.rank div span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rank div span:last-child{flex:none}
+.rank i{font-style:normal;display:inline-block;min-width:3em;color:#9a6a4a}
+.rank .me{background:var(--kin);border-radius:8px;margin:0 -8px;padding:0 8px}
+.rank .gap{justify-content:center;color:#9a6a4a}
+.rank .msg{display:block;text-align:center;color:#9a6a4a;padding:24px 0}
 @media (max-width:520px){.bar{gap:2px;padding-left:4px;padding-right:4px}.bar button{min-width:42px;padding:4px 2px}.sw{width:28px;height:24px}.title h1{font-size:22px}}
 .probe{position:fixed;visibility:hidden;pointer-events:none;padding-top:var(--sat);padding-bottom:var(--sab)}
 </style>
@@ -189,6 +200,16 @@ canvas{position:fixed;inset:0;touch-action:none;display:block}
     <p id="recSum"></p>
     <button class="go alt" id="recWorld" hidden>🌏 せかいの ランキング</button>
     <button class="go" id="recBack">もどる</button>
+  </div>
+</div>
+
+<div class="cardbg" id="ranking" role="dialog" aria-modal="true" aria-labelledby="rankTitle">
+  <div class="card">
+    <h2 id="rankTitle">せかいの ランキング</h2>
+    <div class="tabs" id="rankTabs" role="tablist"><button role="tab" data-b="stage">クリアした ステージ</button><button role="tab" data-b="free">じゆうに遊ぶ</button></div>
+    <div class="rec rank" id="rankList" role="tabpanel" aria-live="polite"></div>
+    <button class="go" id="rankBack">もどる</button><br>
+    <button class="sub" id="rankGC">Game Center で みる</button>
   </div>
 </div>
 
@@ -698,7 +719,26 @@ function saveScore(key,score){
 let GC=false;
 function sendScores(){if(!GC)return;const r=records();
   try{for(const [board,value] of[['stage',unlocked()],['free',r.free]])if(value>0)NATIVE.score.postMessage({board,value})}catch(e){}}
-window.mochiGC=on=>{GC=!!on;$('recWorld').hidden=!GC;sendScores()};
+window.mochiGC=on=>{GC=!!on;$('recWorld').hidden=!GC;sendScores();if(!GC&&$('ranking').classList.contains('show'))showRecords()};
+/* せかいの ランキング：アプリに読みこんでもらい、mochiRank() で受けとる（ひらくたびに読みなおす） */
+let rankBoard='stage',RANK={};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
+function showRanking(board){
+  rankBoard=board;$('rankTabs').querySelectorAll('[data-b]').forEach(b=>b.setAttribute('aria-selected',b.dataset.b===board));
+  if(!RANK[board]){RANK[board]={loading:true};try{NATIVE.ranking.postMessage(board)}catch(e){RANK[board]={ok:false}}}
+  drawRanking();if(!$('ranking').classList.contains('show'))showCard('ranking');
+}
+function drawRanking(){
+  const r=RANK[rankBoard],unit=rankBoard==='stage'?' ステージ':'てん';
+  const row=e=>`<div class="${e.me?'me':''}"><span><i>${e.rank}い</i>${esc(e.name)}</span><span>${e.value}${unit}</span></div>`;
+  const msg=r.loading?'よみこみちゅう…':!r.ok?'よみこめなかった。<br>ネットに つながっているか みてね':!r.top.length?'まだ だれも いないよ':'';
+  if(msg){$('rankList').innerHTML=`<span class="msg">${msg}</span>`;return}
+  let h=r.top.map(row).join('');
+  if(!r.me)h+='<div class="gap">じぶんの きろくは まだ ないよ</div>';
+  else if(!r.top.some(e=>e.me))h+='<div class="gap">…</div>'+row(r.me);
+  $('rankList').innerHTML=h+`<div class="gap">さんか ${r.total}人</div>`;
+}
+window.mochiRank=r=>{if(!r||!r.board)return;RANK[r.board]=r;if(r.board===rankBoard)drawRanking()};
 function failHint(){
   const inv=game.inv0;
   if(inv.anko)return 'コツ：<b>あんこ</b>は おもくて かたい。さいしょに置いて 土台にしよう。';
@@ -733,7 +773,7 @@ function showResult(e){
 }
 const unlocked=()=>SAVE.get('unlocked',0);
 function showCard(id){
-  for(const c of['help','result','records','stages'])$(c).classList.toggle('show',c===id);
+  for(const c of['help','result','records','ranking','stages'])$(c).classList.toggle('show',c===id);
   if(id)$(id).querySelector('.go:not([hidden])').focus();
 }
 function showHome(on){
@@ -780,7 +820,10 @@ $('homeFree').onclick=()=>{audio();startFree()};
 $('homeHelp').onclick=()=>{audio();openHelp('もどる',goHome)};
 $('homeRec').onclick=()=>{audio();showRecords()};
 $('recBack').onclick=goHome;
-$('recWorld').onclick=()=>{try{NATIVE.leaderboard.postMessage('')}catch(e){}};
+$('recWorld').onclick=()=>{audio();RANK={};showRanking('stage')};
+$('rankTabs').onclick=e=>{const b=e.target.closest('[data-b]');if(b&&b.dataset.b!==rankBoard){audio();showRanking(b.dataset.b)}};
+$('rankBack').onclick=showRecords;
+$('rankGC').onclick=()=>{try{NATIVE.leaderboard.postMessage('')}catch(e){}};
 
 /* ============ 入力 ============ */
 function hitBlob(x,y){
