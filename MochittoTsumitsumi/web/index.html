@@ -730,7 +730,7 @@ function showRanking(board){
 }
 function drawRanking(){
   const r=RANK[rankBoard],unit=rankBoard==='stage'?' ステージ':'てん';
-  const row=e=>`<div class="${e.me?'me':''}"><span><i>${e.rank}い</i>${esc(e.name)}</span><span>${e.value}${unit}</span></div>`;
+  const row=e=>`<div class="${e.me?'me':''}"><span><i>${e.rank}位</i>${esc(e.name)}</span><span>${e.value}${unit}</span></div>`;
   const msg=r.loading?'よみこみちゅう…':!r.ok?'よみこめなかった。<br>ネットに つながっているか みてね':!r.top.length?'まだ だれも いないよ':'';
   if(msg){$('rankList').innerHTML=`<span class="msg">${msg}</span>`;return}
   let h=r.top.map(row).join('');
