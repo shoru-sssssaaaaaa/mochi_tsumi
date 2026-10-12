@@ -1,4 +1,4 @@
-# もちっとつみつみ (Mochitto Tsumitsumi)
+# もちっとつみつみ / Mochi Stack
 
 An offline iOS puzzle game where you stack soft, stretchy, sticky mochi above a golden goal line.
 
@@ -19,6 +19,7 @@ An offline iOS puzzle game where you stack soft, stretchy, sticky mochi above a 
   - **よもぎ (yomogi)** — the stickiest; stretches before peeling off
   - **さくら (sakura)** — light and runny; spreads flat to fill gaps
 - Stage mode with hand-made and procedurally generated stages, plus a free-play sandbox
+- Japanese and English (follows the device language; English everywhere else)
 - Game Center leaderboards (stages cleared, free-play best)
 - No ads, no in-app purchases; plays fully offline and progress is saved on the device
 
@@ -37,6 +38,7 @@ MochittoTsumitsumi/
   MochittoTsumitsumiApp.swift   App entry point
   GameView.swift                WKWebView wrapper and JS <-> native bridge
   GameCenter.swift              Game Center sign-in, scores, and leaderboards
+  InfoPlist.xcstrings           Localized app name
   web/index.html                The entire game
 AppStore/                       Store listing text and screenshots
 docs/                           GitHub Pages site (support / privacy policy)
@@ -54,6 +56,8 @@ Play in a desktop browser (no server or build step needed; progress is saved to 
 ```sh
 open MochittoTsumitsumi/web/index.html
 ```
+
+Append `?lang=en` (or `?lang=ja`) to the URL in the address bar to force a language.
 
 Build for the iOS Simulator:
 
