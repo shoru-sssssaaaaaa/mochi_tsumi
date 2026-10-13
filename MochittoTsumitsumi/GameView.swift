@@ -1,6 +1,7 @@
 import SwiftUI
 import WebKit
 import UIKit
+import StoreKit
 
 /// アプリに同梱した web/index.html（ゲーム本体）を、画面いっぱいに表示する。
 /// ネットには一切つながない。
@@ -17,6 +18,7 @@ struct GameView: UIViewRepresentable {
         contents.add(bridge, name: "score")   // JS → アプリ：Game Center にスコアを送る
         contents.add(bridge, name: "ranking") // JS → アプリ：ランキングを読みこんで mochiRank() で返す
         contents.add(bridge, name: "leaderboard") // JS → アプリ：Game Center のランキング画面を開く
+        contents.add(bridge, name: "review")  // JS → アプリ：App Store のレビューをおねがいする
 
         let config = WKWebViewConfiguration()
         config.userContentController = contents
@@ -126,6 +128,9 @@ final class GameBridge: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
             }
         case "leaderboard":
             gameCenter.showLeaderboards()
+        case "review":
+            // 実際に出すかどうか（1年に3回まで）は iOS が決める。TestFlight では出ない
+            if let scene = webView?.window?.windowScene { AppStore.requestReview(in: scene) }
         default:
             break
         }

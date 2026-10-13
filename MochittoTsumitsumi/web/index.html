@@ -645,7 +645,8 @@ function tickTower(){
   // 静かに積み上がっている山の高さ
   let top=FLOOR;for(const b of blobs){if(b.eat||(drag&&drag.b===b)||b.speed>.6)continue;if(b.bb[1]<top)top=b.bb[1]}
   const h=(FLOOR-top)/UNIT;
-  if(Math.abs(h-cand)<.05)candT+=1/60;else{cand=h;candT=0}
+  // つかんでいるあいだは数えない（のばしたもちに くっついたもちまで 持ち上がるので、手をはなしてから1びょう 待つ）
+  if(down&&down.hit){cand=h;candT=0}else if(Math.abs(h-cand)<.05)candT+=1/60;else{cand=h;candT=0}
   if(candT>1&&cand>best+.05){const was=best;best=cand;if(game.mode==='free'&&was>0.3&&best>=1.5){SND.record();pop(W/2,FLOOR-best*UNIT-30,tr('しんきろく！','New record!'),'#f6dca0',24)}}
   if(game.mode==='free')document.getElementById('meter').innerHTML=tr(`いまの山 <b>${Math.max(0,cand).toFixed(1)}</b> もち<br>さいこう ${best.toFixed(1)} もち`,`Now <b>${Math.max(0,cand).toFixed(1)}</b> mochi<br>Best ${best.toFixed(1)} mochi`);
 }
@@ -778,7 +779,12 @@ function showResult(e){
     +(e.isBest?`<div class="best">${tr('ベスト更新！','New best!')}</div>`:`<div class="prev">${tr('ベスト ','Best ')+pnt(e.prev)}</div>`)
     +`<div class="parts">${rows}</div>${msg}`;
   $('resSub').textContent=tr('ホームにもどる','Back to Home');$('resSub').onclick=goHome;
-  showCard('result');
+  showCard('result');askReview(e);
+}
+/* レビューのおねがい：ステージ3いじょうをクリア、または じゆうに遊ぶ で 400てん をこえたとき、いちどだけ（出すかどうかは iOS が決める） */
+function askReview(e){
+  if(!NATIVE||!NATIVE.review||SAVE.get('askedReview',false)||!(e.stage?e.clear&&game.stage>=2:e.score>400))return;
+  SAVE.set('askedReview',true);setTimeout(()=>{try{NATIVE.review.postMessage('')}catch(err){}},800);
 }
 const unlocked=()=>SAVE.get('unlocked',0);
 function showCard(id){
