@@ -58,6 +58,7 @@ awk '/<script>/{f=1;next}/<\/script>/{f=0}f' MochittoTsumitsumi/web/index.html >
 |---|---|---|
 | Native → JS | `WKUserScript` at document start (`installBootScript`) sets `window.__MOCHI_SAVE__` | The saved JSON **as a string** (JS calls `JSON.parse` on it) |
 | Native → JS | Same script sets `window.__MOCHI_LANG__` | `Bundle.main.preferredLocalizations.first` (`"ja"` / `"en"`) |
+| Native → JS | Same script sets `window.__MOCHI_VER__` | `CFBundleShortVersionString` (e.g. `"1.3"`); shown padded as `v1.3.0` in `#ver` on the home screen (hidden in a browser) |
 | JS → Native | `webkit.messageHandlers.save.postMessage(json)` | JSON string, rejected if ≥ 10,000 bytes; stored in `UserDefaults` key `mochitto-save` |
 | JS → Native | `webkit.messageHandlers.haptic.postMessage(kind)` | `"light"` / `"soft"` / `"success"` / `"warning"` |
 | JS → Native | `webkit.messageHandlers.score.postMessage({board,value})` | `board` is `"stage"` / `"free"`; mapped to leaderboard IDs in `GameCenter.leaderboards` (unknown names are ignored) |
