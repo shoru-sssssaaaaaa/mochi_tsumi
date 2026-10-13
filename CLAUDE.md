@@ -58,18 +58,21 @@ awk '/<script>/{f=1;next}/<\/script>/{f=0}f' MochittoTsumitsumi/web/index.html >
 |---|---|---|
 | Native → JS | `WKUserScript` at document start (`installBootScript`) sets `window.__MOCHI_SAVE__` | The saved JSON **as a string** (JS calls `JSON.parse` on it) |
 | Native → JS | Same script sets `window.__MOCHI_LANG__` | `Bundle.main.preferredLocalizations.first` (`"ja"` / `"en"`) |
+| Native → JS | Same script sets `window.__MOCHI_VER__` | `CFBundleShortVersionString` (e.g. `"1.3"`); shown padded as `v1.3.0` in `#ver` on the home screen (hidden in a browser) |
 | JS → Native | `webkit.messageHandlers.save.postMessage(json)` | JSON string, rejected if ≥ 10,000 bytes; stored in `UserDefaults` key `mochitto-save` |
 | JS → Native | `webkit.messageHandlers.haptic.postMessage(kind)` | `"light"` / `"soft"` / `"success"` / `"warning"` |
 | JS → Native | `webkit.messageHandlers.score.postMessage({board,value})` | `board` is `"stage"` / `"free"`; mapped to leaderboard IDs in `GameCenter.leaderboards` (unknown names are ignored) |
 | JS → Native | `webkit.messageHandlers.ranking.postMessage(board)` | Loads the global all-time top 20 + the player's entry for `"stage"` / `"free"` |
 | Native → JS | `evaluateJavaScript("mochiRank(obj)")` | `{board, ok, total, top:[{rank,name,value,me}], me?}`; `ok:false` on any failure |
+| JS → Native | `webkit.messageHandlers.review.postMessage('')` | Asks for an App Store rating via `AppStore.requestReview(in:)`; iOS decides whether it actually appears (never in TestFlight) |
 | JS → Native | `webkit.messageHandlers.leaderboard.postMessage('')` | Opens the Game Center leaderboard screen (secondary link in `#ranking`) |
 | Native → JS | `evaluateJavaScript("mochiGC(bool)")` | Game Center sign-in state; sent on auth change and on every page load (`didFinish`) |
 
 - In a browser `NATIVE` is null, so `SAVE` falls back to `localStorage['mochitto-save']` and `buzz()` is a no-op. Keep this fallback working — the game must stay playable as a plain HTML file.
-- Save keys currently used: `unlocked` (highest cleared stage index + 1), `muted`, `seenHelp`, `records` (`{stages:{[idx]:bestScore}, free:bestScore, plays}`).
+- Save keys currently used: `unlocked` (highest cleared stage index + 1), `muted`, `seenHelp`, `askedReview`, `records` (`{stages:{[idx]:bestScore}, free:bestScore, plays}`).
 - On `webViewWebContentProcessDidTerminate` the boot script is re-installed with the latest UserDefaults value and the page reloads.
 - Game Center: `GC` is true only after `mochiGC(true)`. `sendScores()` (called from `saveScore()` and on sign-in) submits both values every time — Game Center keeps the best, so resubmitting is harmless and backfills scores from before the feature existed. `unlocked` must be saved before `finish()` so the stage-count board sees the new value. The 🌏 button in `#records` is hidden unless `GC`; it opens the in-game `#ranking` card (tabs per board, cache `RANK` cleared on each open, player names escaped with `esc()`). Open leaderboards with `GKAccessPoint.shared.trigger(state:)`, not `GKGameCenterViewController` (deprecated in iOS 26; when its remote GameOverlayUI fails — e.g. always in the Simulator — it leaves an empty transparent VC that swallows all taps).
+- Review prompt: `askReview(e)` runs from `showResult()` and posts `review` once ever (`askedReview`) after clearing stage 3+ (`game.stage>=2`) or scoring >400 in free mode. The flag is only set when `NATIVE.review` exists, so the browser never consumes it.
 - Adding a new message handler requires both `contents.add(bridge, name:)` in `makeUIView` and a case in `userContentController(_:didReceive:)`.
 
 ### Game (`web/index.html`)
@@ -81,7 +84,7 @@ awk '/<script>/{f=1;next}/<\/script>/{f=0}f' MochittoTsumitsumi/web/index.html >
   - Floor glue (`p.st`) pins points to the tray until pulled past `TYPES[t].glue`.
 - **Mochi types**: `TYPES` holds all tuning parameters (the comment above it explains each field). `PICK` is the order shown in the toolbar and used for procedural stages. `mikan` is a reward item, not pickable.
 - **Stages**: `STAGES` defines the first 5 as `[goalHeightInMochi, inventory]`. `stageOf(i)` generates stage 6+ deterministically (LCG seeded by index); goal height is clamped by screen height. Height unit: `UNIT = 80*SCALE` px = 1 mochi; `SCALE` sets mochi size and `UNIT` follows it so stage goals stay balanced.
-- **Win/lose**: `tickGame()` — clear when `stableTop()` ≥ goal for 2 s; fail when all pieces are used and everything is still for 2.5 s. While the player is holding a mochi (`down.hit`) both timers are frozen, so stretching by hand can't count toward the goal.
+- **Win/lose**: `tickGame()` — clear when `stableTop()` ≥ goal for 2 s; fail when all pieces are used and everything is still for 2.5 s. While the player is holding a mochi (`down.hit`) both timers are frozen, so stretching by hand can't count toward the goal. Free mode's `tickTower()` follows the same rule: while `down.hit` it resets `candT`, so `best` only updates after release (holding a stretched mochi also lifts the mochi welded to it, which aren't excluded by the `drag.b` check).
 - **End of a run**: `finish(clear,delay)` computes the score and saves it into `game.end`; `tickEnd()` then runs `eatAll()` automatically and calls `showResult()` once every blob is eaten. Score = height ×100 (+ leftovers ×50 and speed bonus `300 - sec*5` in stage mode) − touches ×20 (`game.touches`, counted on each `pointerdown` on a mochi during play). In free mode the 食べる button ends the run.
 - **Screens**: `#home` is a full-screen opaque layer (logo, CSS-drawn mochi whose colors come from `TYPES`, button panel), toggled with `showHome(on)`, which also sets `inert` on the canvas/toolbar/HUD behind it. `.card` overlays `#help` / `#result` / `#records` / `#ranking` / `#stages` (stage select: cleared stages + the next one; its home chip is hidden until stage 1 is cleared) are switched with `showCard(id)` (only one shown) and stack above home. The app boots into `goHome()`. The toolbar's ホーム button discards the current run. Sound toggling goes through `toggleSnd()` so the toolbar and home buttons stay in sync.
 - **Modes**: `game.mode` is `'menu'` | `'stage'` | `'free'`. The toolbar (`buildBar()`) is regenerated from state on every change.

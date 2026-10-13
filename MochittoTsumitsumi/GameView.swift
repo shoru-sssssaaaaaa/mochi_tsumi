@@ -1,6 +1,7 @@
 import SwiftUI
 import WebKit
 import UIKit
+import StoreKit
 
 /// アプリに同梱した web/index.html（ゲーム本体）を、画面いっぱいに表示する。
 /// ネットには一切つながない。
@@ -17,6 +18,7 @@ struct GameView: UIViewRepresentable {
         contents.add(bridge, name: "score")   // JS → アプリ：Game Center にスコアを送る
         contents.add(bridge, name: "ranking") // JS → アプリ：ランキングを読みこんで mochiRank() で返す
         contents.add(bridge, name: "leaderboard") // JS → アプリ：Game Center のランキング画面を開く
+        contents.add(bridge, name: "review")  // JS → アプリ：App Store のレビューをおねがいする
 
         let config = WKWebViewConfiguration()
         config.userContentController = contents
@@ -79,12 +81,13 @@ final class GameBridge: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
     }
 
     /// ページのスクリプトより先に、保存しておいた進みぐあい（window.__MOCHI_SAVE__）と
-    /// iOS がこのアプリに選んだ言語（window.__MOCHI_LANG__、"ja" か "en"）を入れる
+    /// iOS がこのアプリに選んだ言語（window.__MOCHI_LANG__、"ja" か "en"）と、バージョン（window.__MOCHI_VER__）を入れる
     func installBootScript(into contents: WKUserContentController) {
         let saved = UserDefaults.standard.string(forKey: Self.saveKey) ?? "{}"
         let lang = Bundle.main.preferredLocalizations.first ?? "en"
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
         contents.removeAllUserScripts()
-        contents.addUserScript(WKUserScript(source: "window.__MOCHI_SAVE__ = \(Self.jsString(saved)); window.__MOCHI_LANG__ = \(Self.jsString(lang));",
+        contents.addUserScript(WKUserScript(source: "window.__MOCHI_SAVE__ = \(Self.jsString(saved)); window.__MOCHI_LANG__ = \(Self.jsString(lang)); window.__MOCHI_VER__ = \(Self.jsString(version));",
                                             injectionTime: .atDocumentStart,
                                             forMainFrameOnly: true))
     }
@@ -126,6 +129,9 @@ final class GameBridge: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
             }
         case "leaderboard":
             gameCenter.showLeaderboards()
+        case "review":
+            // 実際に出すかどうか（1年に3回まで）は iOS が決める。TestFlight では出ない
+            if let scene = webView?.window?.windowScene { AppStore.requestReview(in: scene) }
         default:
             break
         }
