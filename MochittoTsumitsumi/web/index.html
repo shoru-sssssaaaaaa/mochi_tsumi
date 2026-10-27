@@ -75,6 +75,9 @@ canvas{position:fixed;inset:0;touch-action:none;display:block}
 .home.show{display:flex;animation:fadein .35s ease-out}
 @keyframes fadein{from{opacity:0}}
 .home .snd{position:absolute;top:calc(10px + var(--sat));right:12px;width:44px;height:44px;border:none;border-radius:50%;background:rgba(60,12,10,.35);font-size:20px;cursor:pointer}
+.home .tilt{right:auto;left:12px}
+.home .tilt[aria-pressed=false]{opacity:.45}
+.home .tlbl{position:absolute;top:calc(56px + var(--sat));left:34px;transform:translateX(-50%);white-space:nowrap;font-size:8px;color:rgba(246,220,160,.6);pointer-events:none}
 .home .ver{position:absolute;top:calc(56px + var(--sat));right:12px;width:44px;text-align:center;font-size:8px;color:rgba(246,220,160,.28);pointer-events:none}
 .logo{padding:calc(36px + var(--sat)) 20px 0;text-align:center}
 .logo h1{margin:0;font-weight:400;line-height:1.05;color:var(--mochi);text-shadow:0 4px 0 var(--urushi-d),0 0 18px rgba(226,176,74,.35)}
@@ -153,6 +156,8 @@ html[lang=en] .logo h1 span:last-child{font-size:clamp(34px,11vw,56px);letter-sp
 <section class="home show" id="home" aria-labelledby="homeTitle">
   <button class="snd" id="homeSnd"></button>
   <small class="ver" id="ver" aria-hidden="true"></small>
+  <button class="snd tilt" id="homeTilt" hidden></button>
+  <small class="tlbl" id="tiltLbl" aria-hidden="true" hidden></small>
   <div class="logo">
     <h1 id="homeTitle"><span data-en="Squishy">もちっと</span><span data-en="Mochi Stack">つみつみ</span></h1>
     <p data-en="Stretchy, sticky mochi stacking puzzle">のびて、くっつく。おもち積みパズル</p>
@@ -179,6 +184,7 @@ html[lang=en] .logo h1 span:last-child{font-size:clamp(34px,11vw,56px);letter-sp
     <ul>
       <li><span>👆</span><span data-en="Tap an empty spot and a mochi drops there">なにもない所をタップすると、そこにおもちが落ちてくる</span></li>
       <li><span>✊</span><span data-en="Pull a mochi to move it. It stretches a lot!">おもちは引っぱって動かせる。よくのびる</span></li>
+      <li id="helpTilt" hidden><span>📱</span><span data-en="Tilt your iPhone and the mochi lean that way. Use it to keep your tower balanced">スマホを かたむけると、おもちも そっちへ よる。バランスを とろう</span></li>
       <li><span>🍡</span><span data-en="Each kind of mochi is different: <b>heavy, slippery, sticky, gooey</b>. Pick one to see what it does">おもちは種類で性質がちがう。<b>おもい・つるつる・くっつく・とろとろ</b>。えらぶと下に説明が出る</span></li>
       <li><span>🔢</span><span data-en="Each stage decides which mochi you get, and how many">使えるおもちの種類と数は、ステージごとに決まっている</span></li>
       <li><span>🥢</span><span data-en="At the end, you eat them all for points. The more you touch them, the worse they taste: <b>minus</b> points">さいごは ぜんぶ食べて スコアに。手で さわるほど 味が落ちて <b>マイナス</b></span></li>
@@ -213,6 +219,15 @@ html[lang=en] .logo h1 span:last-child{font-size:clamp(34px,11vw,56px);letter-sp
     <div class="rec rank" id="rankList" role="tabpanel" aria-live="polite"></div>
     <button class="go" id="rankBack" data-en="Back">もどる</button><br>
     <button class="sub" id="rankGC" data-en="Open in Game Center">Game Center で みる</button>
+  </div>
+</div>
+
+<div class="cardbg" id="update" role="dialog" aria-modal="true" aria-labelledby="updTitle">
+  <div class="card">
+    <h2 id="updTitle" data-en="A new version is out!">あたらしい バージョンが でたよ</h2>
+    <p id="updText"></p>
+    <button class="go" id="updGo" data-en="Open the App Store">App Store で みる</button><br>
+    <button class="sub" id="updLater" data-en="Later">あとで</button>
   </div>
 </div>
 
@@ -297,6 +312,15 @@ const SAVE=(()=>{let d={};
   return{get:(k,v)=>k in d?d[k]:v,set(k,v){d[k]=v;const j=JSON.stringify(d);
     try{if(NATIVE&&NATIVE.save)NATIVE.save.postMessage(j);else localStorage.setItem('mochitto-save',j)}catch(e){}}};
 })();
+/* かたむき：アプリが mochiTilt() で 画面の左右にかかる重力を送ってくる。遊びはじめたときの持ち方を「まっすぐ」とみなす（ねころんで遊んでも ながれない） */
+const HAS_TILT=!!(NATIVE&&NATIVE.tilt);
+let TILT=SAVE.get('tilt',true),TX0=null,TX=0,TGX=0;
+window.mochiTilt=x=>{TX=x;if(TX0===null)TX0=x};
+function tiltRun(on){TX0=null;TX=0;try{HAS_TILT&&NATIVE.tilt.postMessage(!!(on&&TILT))}catch(e){}}
+// 3°くらいまでは むし。ねばるもちでも 動きが見えるように ほんものの1.5ばい、0.5G で頭うち。急に変わらないように ならす
+function tickTilt(){const d=TX0===null?0:TX-TX0,a=Math.abs(d);TGX+=((a<.05?0:Math.sign(d)*Math.min(.5,(a-.05)*1.5))-TGX)*.15}
+function tiltHint(){if(!HAS_TILT||!TILT||SAVE.get('seenTilt',false))return;SAVE.set('seenTilt',true);
+  $('tip').innerHTML='<b>📱</b>'+tr('スマホを かたむけると、おもちも そっちへ よるよ','Tilt your iPhone and the mochi lean that way')}
 function audio(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(AC&&AC.state==='suspended')AC.resume();return AC}
 function tone(f0,f1,dur,vol,type='sine'){
   if(muted||!AC)return;const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain();
@@ -333,10 +357,10 @@ function makeBlob(x,y,R,type,squash=1){
   return b;
 }
 function stepPhysics(){
-  const dt=1/60/SUB,g=GRAV*dt*dt;
+  const dt=1/60/SUB,g=GRAV*dt*dt,gx=GRAV*TGX*dt*dt;
   for(let s=0;s<SUB;s++){
     for(const b of blobs)for(const p of b.pts){
-      const vx=(p.x-p.ox)*.994,vy=(p.y-p.oy)*.994;p.ox=p.x;p.oy=p.y;p.x+=vx;p.y+=vy+g;
+      const vx=(p.x-p.ox)*.994,vy=(p.y-p.oy)*.994;p.ox=p.x;p.oy=p.y;p.x+=vx+gx;p.y+=vy+g;
     }
     for(let it=0;it<ITER;it++){
       for(const b of blobs)shape(b);
@@ -663,6 +687,7 @@ function startStage(i){
   sel=Object.keys(inv0)[0];
   updateGoal();buildBar();showTip(sel);
   pop(W/2,FLOOR-goal*UNIT-40,stageName(i),'#fbf7ef',30,1);
+  tiltRun(true);tiltHint();
 }
 const stageName=i=>tr('ステージ','Stage ')+(i+1);
 function startFree(){
@@ -672,6 +697,7 @@ function startFree(){
   buildBar();showTip(sel);
   [[.3,'shiro'],[.5,'kinako'],[.7,'sakura']].forEach(([x,t],i)=>makeBlob(W*x,FLOOR-200-i*60,40+i*3,t));
   for(const b of blobs)bbox(b);
+  tiltRun(true);tiltHint();
 }
 function updateGoal(){
   if(game.mode!=='stage')return;
@@ -790,7 +816,7 @@ function askReview(e){
 }
 const unlocked=()=>SAVE.get('unlocked',0);
 function showCard(id){
-  for(const c of['help','result','records','ranking','stages'])$(c).classList.toggle('show',c===id);
+  for(const c of['help','result','records','ranking','stages','update'])$(c).classList.toggle('show',c===id);
   if(id)$(id).querySelector('.go:not([hidden])').focus();
 }
 function showHome(on){
@@ -802,9 +828,11 @@ function goHome(){
   $('goal').innerHTML='';$('meter').innerHTML='';$('tip').innerHTML='';
   const u=unlocked();$('homeStage').textContent=u>0?tr(`ステージ${u+1}から つづける`,`Continue from Stage ${u+1}`):tr('ステージ1から はじめる','Start Stage 1');
   $('homeProg').textContent=u>0?tr(`★ ステージ${u}まで クリア`,`★ Cleared up to Stage ${u}`):'';$('homeSel').hidden=u===0;
-  updateSnd();showCard(null);showHome(true);$('homeStage').focus();
+  updateSnd();updateTilt();tiltRun(false);showCard(null);showHome(true);$('homeStage').focus();offerUpdate();
 }
 function updateSnd(){const b=$('homeSnd');b.textContent=muted?'🔕':'🔔';b.setAttribute('aria-pressed',!muted);b.setAttribute('aria-label',tr('音','Sound'))}
+function updateTilt(){const b=$('homeTilt');b.hidden=$('tiltLbl').hidden=$('helpTilt').hidden=!HAS_TILT;
+  b.textContent='📱';b.setAttribute('aria-pressed',TILT);b.setAttribute('aria-label',tr('かたむき','Tilt'));$('tiltLbl').textContent=TILT?tr('かたむき オン','Tilt on'):tr('かたむき オフ','Tilt off')}
 function toggleSnd(){muted=!muted;SAVE.set('muted',muted);buildBar();updateSnd()}
 document.querySelectorAll('.m').forEach((el,i)=>{const T=TYPES[el.dataset.t];
   el.style.cssText=`--c:${T.fill};--l:${T.line};--e:${T.eye};--k:${T.cheek};--s:${T.rs};animation-delay:${-i*.45}s`;
@@ -812,8 +840,21 @@ document.querySelectorAll('.m').forEach((el,i)=>{const T=TYPES[el.dataset.t];
 $('scene').addEventListener('pointerdown',e=>{const m=e.target.closest('.m');if(!m)return;
   audio();SND.puni();buzz('light');m.classList.remove('poke');void m.offsetWidth;m.classList.add('poke')});
 $('homeSnd').onclick=()=>{audio();toggleSnd()};
+$('homeTilt').onclick=()=>{audio();TILT=!TILT;SAVE.set('tilt',TILT);updateTilt();SND.puni();buzz('light')};
 /* バージョン：アプリが教えてくれる（1.3 → v1.3.0）。ブラウザでは出さない */
-if(window.__MOCHI_VER__)$('ver').textContent='v'+[...String(window.__MOCHI_VER__).split('.'),0,0].slice(0,3).join('.');
+const vtxt=v=>'v'+[...String(v).split('.'),0,0].slice(0,3).join('.');
+if(window.__MOCHI_VER__)$('ver').textContent=vtxt(window.__MOCHI_VER__);
+/* アップデート：アプリが App Store で 新しいバージョンを見つけたら mochiUpdate() で知らせてくる。ホームで バージョンごとに いちどだけ */
+let UPD=null;
+window.mochiUpdate=v=>{UPD=v;offerUpdate()};
+function offerUpdate(){
+  if(!UPD||SAVE.get('seenUpdate','')===UPD||game.mode!=='menu'||document.querySelector('.cardbg.show'))return;
+  SAVE.set('seenUpdate',UPD);
+  $('updText').innerHTML=tr(`App Store で <b>${vtxt(UPD)}</b> に できるよ。<br>いまは ${vtxt(window.__MOCHI_VER__)}`,`<b>${vtxt(UPD)}</b> is on the App Store.<br>You have ${vtxt(window.__MOCHI_VER__)}.`);
+  showCard('update');
+}
+$('updGo').onclick=()=>{try{NATIVE.update.postMessage('')}catch(e){}goHome()};
+$('updLater').onclick=goHome;
 function openHelp(label,onGo){$('helpGo').textContent=label;$('helpGo').onclick=onGo;showCard('help')}
 function showRecords(){
   const r=records(),u=unlocked(),n=Math.max(u+1,...Object.keys(r.stages).map(k=>+k+1));
@@ -899,7 +940,7 @@ buildBar();showTip(sel);
 /* ============ ループ ============ */
 function frame(){
   time+=1/60;
-  tickMallets();stepPhysics();
+  tickMallets();tickTilt();stepPhysics();
   for(const b of blobs)b._drag=analyze(b);
   tickEat();tickTower();tickGame();tickEnd();
   for(const f of fx){f.y+=f.vy;f.life-=1/60/(f.size>24?1.4:1)}fx=fx.filter(f=>f.life>0);

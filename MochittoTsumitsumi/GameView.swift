@@ -4,7 +4,7 @@ import UIKit
 import StoreKit
 
 /// アプリに同梱した web/index.html（ゲーム本体）を、画面いっぱいに表示する。
-/// ネットには一切つながない。
+/// 通信は Game Center と、1日1回のアップデート確認（AppUpdate）だけ。
 struct GameView: UIViewRepresentable {
     func makeCoordinator() -> GameBridge { GameBridge() }
 
@@ -19,6 +19,8 @@ struct GameView: UIViewRepresentable {
         contents.add(bridge, name: "ranking") // JS → アプリ：ランキングを読みこんで mochiRank() で返す
         contents.add(bridge, name: "leaderboard") // JS → アプリ：Game Center のランキング画面を開く
         contents.add(bridge, name: "review")  // JS → アプリ：App Store のレビューをおねがいする
+        contents.add(bridge, name: "tilt")    // JS → アプリ：かたむきを mochiTilt() で送りはじめる／やめる
+        contents.add(bridge, name: "update")  // JS → アプリ：App Store のページを開く
 
         let config = WKWebViewConfiguration()
         config.userContentController = contents
@@ -40,6 +42,7 @@ struct GameView: UIViewRepresentable {
         bridge.loadGame()
         bridge.prepareHaptics()
         bridge.gameCenter.authenticate()
+        bridge.appUpdate.check { [weak bridge] _ in bridge?.notifyUpdate() }
         return web
     }
 
@@ -51,6 +54,8 @@ final class GameBridge: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
     static let saveKey = "mochitto-save"
     weak var webView: WKWebView?
     let gameCenter = GameCenter()
+    let tilt = Tilt()
+    let appUpdate = AppUpdate()
 
     private let lightTap = UIImpactFeedbackGenerator(style: .light)
     private let softTap = UIImpactFeedbackGenerator(style: .soft)
@@ -66,11 +71,27 @@ final class GameBridge: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
     override init() {
         super.init()
         gameCenter.onChange = { [weak self] _ in self?.notifyGameCenter() }
+        tilt.onChange = { [weak self] x in
+            self?.webView?.evaluateJavaScript("window.mochiTilt&&mochiTilt(\(String(format: "%.4f", x)))")
+        }
+        let center = NotificationCenter.default
+        center.addObserver(forName: UIApplication.willResignActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor in self?.tilt.pause() }
+        }
+        center.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor in self?.tilt.resume() }
+        }
     }
 
     /// Game Center が使えるかどうかを、ページに知らせる
     func notifyGameCenter() {
         webView?.evaluateJavaScript("window.mochiGC&&mochiGC(\(gameCenter.isReady))")
+    }
+
+    /// App Store に新しいバージョンがあれば、ページに知らせる（ホームで いちどだけ おしらせが出る）
+    func notifyUpdate() {
+        guard let version = appUpdate.available else { return }
+        webView?.evaluateJavaScript("window.mochiUpdate&&mochiUpdate(\(Self.jsString(version)))")
     }
 
     /// 振動をすぐ出せるように準備しておく
@@ -132,6 +153,10 @@ final class GameBridge: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
         case "review":
             // 実際に出すかどうか（1年に3回まで）は iOS が決める。TestFlight では出ない
             if let scene = webView?.window?.windowScene { AppStore.requestReview(in: scene) }
+        case "tilt":
+            tilt.set(message.body as? Bool ?? false)
+        case "update":
+            UIApplication.shared.open(AppUpdate.storeURL)
         default:
             break
         }
@@ -139,10 +164,12 @@ final class GameBridge: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         notifyGameCenter()
+        notifyUpdate()
     }
 
     // メモリ不足などでページが落ちたら、最新のセーブで読み直す
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+        tilt.set(false)
         installBootScript(into: webView.configuration.userContentController)
         loadGame()
     }

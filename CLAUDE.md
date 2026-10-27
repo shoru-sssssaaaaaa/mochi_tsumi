@@ -8,7 +8,7 @@ This file provides guidance to Claude Code when working in this repository.
 
 - Platform: iPhone only, portrait, iOS 16.0+, Swift 5, SwiftUI app lifecycle
 - Bundle ID: `com.shotasakaguchi.mochittotsumitsumi`
-- No network access of its own (Game Center is the only online feature, via GameKit), no third-party dependencies, no package manager, no build step for the web part
+- Network: only Game Center (GameKit) and a once-a-day App Store version lookup (`AppUpdate.swift`); the game itself never touches the network. No third-party dependencies, no package manager, no build step for the web part
 
 ## Layout
 
@@ -18,6 +18,8 @@ MochittoTsumitsumi/
   MochittoTsumitsumiApp.swift     App entry; sets AVAudioSession to .ambient
   GameView.swift                  WKWebView wrapper + GameBridge (JS <-> native)
   GameCenter.swift                GameKit sign-in, score submission, leaderboard UI
+  Tilt.swift                      CoreMotion gravity.x sampling while a run is in progress
+  AppUpdate.swift                 Daily iTunes lookup for a newer version; opens the App Store
   MochittoTsumitsumi.entitlements Game Center entitlement (CODE_SIGN_ENTITLEMENTS)
   InfoPlist.xcstrings             Localized CFBundleDisplayName (en "Mochi Stack" / ja "もちっとつみつみ")
   web/index.html                  The entire game (HTML/CSS/JS, ~700 lines, no external assets)
@@ -67,12 +69,17 @@ awk '/<script>/{f=1;next}/<\/script>/{f=0}f' MochittoTsumitsumi/web/index.html >
 | JS → Native | `webkit.messageHandlers.review.postMessage('')` | Asks for an App Store rating via `AppStore.requestReview(in:)`; iOS decides whether it actually appears (never in TestFlight) |
 | JS → Native | `webkit.messageHandlers.leaderboard.postMessage('')` | Opens the Game Center leaderboard screen (secondary link in `#ranking`) |
 | Native → JS | `evaluateJavaScript("mochiGC(bool)")` | Game Center sign-in state; sent on auth change and on every page load (`didFinish`) |
+| JS → Native | `webkit.messageHandlers.tilt.postMessage(bool)` | Start/stop motion updates (`tiltRun()`: on at run start if `TILT`, off on `goHome`) |
+| Native → JS | `evaluateJavaScript("mochiTilt(x)")` | `deviceMotion.gravity.x` at 30 Hz, only when it changed by > 0.002; paused while the app is inactive |
+| Native → JS | `evaluateJavaScript("mochiUpdate(ver)")` | A newer App Store version (and the device's iOS meets its `minimumOsVersion`); sent after the daily check and on every `didFinish` |
+| JS → Native | `webkit.messageHandlers.update.postMessage('')` | Opens the App Store page (`itms-apps://`) |
 
 - In a browser `NATIVE` is null, so `SAVE` falls back to `localStorage['mochitto-save']` and `buzz()` is a no-op. Keep this fallback working — the game must stay playable as a plain HTML file.
-- Save keys currently used: `unlocked` (highest cleared stage index + 1), `muted`, `seenHelp`, `askedReview`, `records` (`{stages:{[idx]:bestScore}, free:bestScore, plays}`).
+- Save keys currently used: `unlocked` (highest cleared stage index + 1), `muted`, `seenHelp`, `askedReview`, `tilt`, `seenTilt`, `seenUpdate` (last version the update card was shown for), `records` (`{stages:{[idx]:bestScore}, free:bestScore, plays}`).
 - On `webViewWebContentProcessDidTerminate` the boot script is re-installed with the latest UserDefaults value and the page reloads.
 - Game Center: `GC` is true only after `mochiGC(true)`. `sendScores()` (called from `saveScore()` and on sign-in) submits both values every time — Game Center keeps the best, so resubmitting is harmless and backfills scores from before the feature existed. `unlocked` must be saved before `finish()` so the stage-count board sees the new value. The 🌏 button in `#records` is hidden unless `GC`; it opens the in-game `#ranking` card (tabs per board, cache `RANK` cleared on each open, player names escaped with `esc()`). Open leaderboards with `GKAccessPoint.shared.trigger(state:)`, not `GKGameCenterViewController` (deprecated in iOS 26; when its remote GameOverlayUI fails — e.g. always in the Simulator — it leaves an empty transparent VC that swallows all taps).
 - Review prompt: `askReview(e)` runs from `showResult()` and posts `review` once ever (`askedReview`) after clearing stage 3+ (`game.stage>=2`) or scoring >400 in free mode. The flag is only set when `NATIVE.review` exists, so the browser never consumes it.
+- Update notice: `offerUpdate()` shows the `#update` card once per version (`seenUpdate`), only on the home screen with no other card open; it runs from `mochiUpdate()` and at the end of `goHome()`. To test, set UserDefaults `update-latest` to e.g. `9.9` (it is overwritten by the next daily check).
 - Adding a new message handler requires both `contents.add(bridge, name:)` in `makeUIView` and a case in `userContentController(_:didReceive:)`.
 
 ### Game (`web/index.html`)
@@ -81,12 +88,13 @@ awk '/<script>/{f=1;next}/<\/script>/{f=0}f' MochittoTsumitsumi/web/index.html >
 - **Soft-body physics** (Verlet): each blob is a ring of `N=18` points. Per frame: `SUB=3` substeps × `ITER=4` constraint iterations of `shape()` (edge springs with plasticity, skip-one bend springs, area pressure) → drag → `collide()` → `solveWelds()` → `walls()`.
   - `collide()` is O(blobs² × N²) with bbox culling; `LIMIT=28` blobs in free mode and `welds.length < 500` cap keep it tractable.
   - Welds are the "sticky" contacts; kinako (`stick:0`) never welds with anything.
+  - Tilt: `tickTilt()` turns `TX - TX0` (gravity.x relative to the first sample of the run, so any holding angle counts as level) into lateral gravity `TGX` (deadzone 0.05, gain 1.5, cap 0.5 G, smoothed); `stepPhysics` adds `GRAV*TGX*dt²` to x. Only active when `HAS_TILT` (native) and the `tilt` setting is on (default on; 📱 `#homeTilt` toggle on home, hidden in a browser).
   - Floor glue (`p.st`) pins points to the tray until pulled past `TYPES[t].glue`.
 - **Mochi types**: `TYPES` holds all tuning parameters (the comment above it explains each field). `PICK` is the order shown in the toolbar and used for procedural stages. `mikan` is a reward item, not pickable.
 - **Stages**: `STAGES` defines the first 5 as `[goalHeightInMochi, inventory]`. `stageOf(i)` generates stage 6+ deterministically (LCG seeded by index); goal height is clamped by screen height. Height unit: `UNIT = 80*SCALE` px = 1 mochi; `SCALE` sets mochi size and `UNIT` follows it so stage goals stay balanced.
 - **Win/lose**: `tickGame()` — clear when `stableTop()` ≥ goal for 2 s; fail when all pieces are used and everything is still for 2.5 s. While the player is holding a mochi (`down.hit`) both timers are frozen, so stretching by hand can't count toward the goal. Free mode's `tickTower()` follows the same rule: while `down.hit` it resets `candT`, so `best` only updates after release (holding a stretched mochi also lifts the mochi welded to it, which aren't excluded by the `drag.b` check).
 - **End of a run**: `finish(clear,delay)` computes the score and saves it into `game.end`; `tickEnd()` then runs `eatAll()` automatically and calls `showResult()` once every blob is eaten. Score = height ×100 (+ leftovers ×50 and speed bonus `300 - sec*5` in stage mode) − touches ×20 (`game.touches`, counted on each `pointerdown` on a mochi during play). In free mode the 食べる button ends the run.
-- **Screens**: `#home` is a full-screen opaque layer (logo, CSS-drawn mochi whose colors come from `TYPES`, button panel), toggled with `showHome(on)`, which also sets `inert` on the canvas/toolbar/HUD behind it. `.card` overlays `#help` / `#result` / `#records` / `#ranking` / `#stages` (stage select: cleared stages + the next one; its home chip is hidden until stage 1 is cleared) are switched with `showCard(id)` (only one shown) and stack above home. The app boots into `goHome()`. The toolbar's ホーム button discards the current run. Sound toggling goes through `toggleSnd()` so the toolbar and home buttons stay in sync.
+- **Screens**: `#home` is a full-screen opaque layer (logo, CSS-drawn mochi whose colors come from `TYPES`, button panel), toggled with `showHome(on)`, which also sets `inert` on the canvas/toolbar/HUD behind it. `.card` overlays `#help` / `#result` / `#records` / `#ranking` / `#update` / `#stages` (stage select: cleared stages + the next one; its home chip is hidden until stage 1 is cleared) are switched with `showCard(id)` (only one shown) and stack above home. The app boots into `goHome()`. The toolbar's ホーム button discards the current run. Sound toggling goes through `toggleSnd()` so the toolbar and home buttons stay in sync.
 - **Modes**: `game.mode` is `'menu'` | `'stage'` | `'free'`. The toolbar (`buildBar()`) is regenerated from state on every change.
 - **Language**: `LANG` = `?lang=` query → `window.__MOCHI_LANG__` → `navigator.language`. `JA` is true for `ja*`; everything else is English. Strings in JS use `tr(ja,en)`; static HTML carries `data-en` (innerHTML) / `data-en-label` (aria-label), swapped once at boot. Try it in a browser with `index.html?lang=en`. English-only CSS hooks use `html[lang=en]`.
 - **Audio**: all sounds synthesized with WebAudio (`tone`, `noise`, `SND`). `AudioContext` is created lazily on first user gesture via `audio()`.
@@ -95,7 +103,7 @@ awk '/<script>/{f=1;next}/<\/script>/{f=0}f' MochittoTsumitsumi/web/index.html >
 
 ## Constraints and gotchas
 
-- **App Review guideline 4.2**: this is a WebView-wrapped game. Do not add network requests, external fonts/CDNs, or browser-like UI (zoom, link previews, long-press menus, scroll bounce). Native value (haptics, local save, offline play) is part of the review argument — don't remove it.
+- **App Review guideline 4.2**: this is a WebView-wrapped game. Do not add network requests from the web side (the daily update lookup is native-only), external fonts/CDNs, or browser-like UI (zoom, link previews, long-press menus, scroll bounce). Native value (haptics, local save, offline play) is part of the review argument — don't remove it.
 - The optional font `MochiyPopOne-Regular.ttf` is picked up automatically if placed in `web/` (include `OFL.txt` with it).
 - `web/` is a **folder reference** in the project, so any file dropped in it is bundled automatically. New Swift files, however, must be added to `project.pbxproj` (the project does not use synchronized groups).
 - Docs (`*.md`) belong at the repo root or in `AppStore/`, not inside `MochittoTsumitsumi/`, so they don't end up in Copy Bundle Resources.
